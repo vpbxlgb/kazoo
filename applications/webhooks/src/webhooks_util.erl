@@ -18,6 +18,7 @@
          ,jobj_to_rec/1
          ,hook_event_lowered/1
          ,hook_event/1
+         ,custom_data/1
          ,load_hooks/1
          ,load_hook/2
          ,hook_id/1
@@ -91,6 +92,10 @@ to_json(Hook) ->
        ,{<<"account_id">>, Hook#webhook.account_id}
        ,{<<"custom_data">>, Hook#webhook.custom_data}
       ]).
+
+-spec custom_data(webhook()) -> wh_json:object().
+custom_data(Hook) ->
+  Hook#webhook.custom_data.
 
 -spec find_webhooks(ne_binary(), api_binary()) -> webhooks().
 find_webhooks(_HookEvent, 'undefined') -> [];

@@ -2,9 +2,10 @@
 %%% @copyright (C) 2015, 2600Hz INC
 %%%
 %%% @contributors
+%%% PEter Defebvre
 %%%-------------------------------------------------------------------
 
--module(webhooks_object).
+-module(webhooks_doc).
 
 -export([init/0
          ,bindings_and_responders/0
@@ -15,12 +16,12 @@
 -include("../webhooks.hrl").
 
 -define(ID, wh_util:to_binary(?MODULE)).
--define(NAME, <<"object">>).
--define(DESC, <<"Receive notifications when objects in Kazoo are changed">>).
+-define(NAME, <<"doc">>).
+-define(DESC, <<"Receive notifications when docs in Kazoo are changed">>).
 
 -define(TYPE_MODIFIER
         ,wh_json:from_list([{<<"type">>, <<"array">>}
-                            ,{<<"description">>, <<"A list of object types to handle">>}
+                            ,{<<"description">>, <<"A list of doc types to handle">>}
                             ,{<<"items">>, wh_json:from_list([{<<"type">>, <<"string">>}])}
                            ])
        ).
@@ -37,9 +38,9 @@
                            ])
        ).
 
--define(OBJECT_TYPES
+-define(DOC_TYPES
         ,whapps_config:get(?APP_NAME
-                           ,<<"object_types">>
+                           ,<<"doc_types">>
                            ,[kz_account:type()
                              ,kzd_callflow:type()
                              ,kz_device:type()
@@ -77,7 +78,7 @@ bindings(AccountsWithObjectHook) ->
                ,{'db', Account}
               ]
      }
-     || Type <- ?OBJECT_TYPES,
+     || Type <- ?DOC_TYPES,
         Account <- lists:usort(AccountsWithObjectHook)
     ].
 
@@ -116,7 +117,33 @@ handle_event(JObj, _Props) ->
                         ,[wh_api:event_name(JObj)
                           ,AccountId
                          ]);
-        Hooks -> webhooks_util:fire_hooks(format_event(JObj, AccountId), Hooks)
+        Hooks ->
+            Type = wh_json:get_value(<<"Type">>, JObj),
+            EventName = wh_json:get_value(<<"Event-Name">>, JObj),
+            Filtered = filter_hooks(Type, EventName, Hooks),
+            webhooks_util:fire_hooks(format_event(JObj, AccountId), Filtered)
+    end.
+
+-spec filter_hooks(ne_binary(), ne_binary(), webhooks()) -> webhooks().
+-spec filter_hooks(ne_binary(), ne_binary(), webhooks(), webhooks()) -> webhooks().
+filter_hooks(Type, EventName, Hooks) ->
+    filter_hooks(Type, EventName, Hooks, []).
+
+filter_hooks(_Type, _EventName, [], Hooks) -> Hooks;
+filter_hooks(Type, EventName, [Hook|Hooks], Acc) ->
+    Data = webhooks_util:custom_data(Hook),
+    case
+        {wh_json:get_value(<<"doc_type">>, Data)
+         ,wh_json:get_value(<<"event_type">>, Data)}
+    of
+        {'undefined', 'undefined'} ->
+            filter_hooks(Type, EventName, Hooks, [Hook|Acc]);
+        {Type, 'undefined'} ->
+            filter_hooks(Type, EventName, Hooks, [Hook|Acc]);
+        {'undefined', EventName} ->
+            filter_hooks(Type, EventName, Hooks, [Hook|Acc]);
+        {_, _} ->
+            filter_hooks(Type, EventName, Hooks, Acc)
     end.
 
 -spec format_event(wh_json:object(), ne_binary()) -> wh_json:object().
