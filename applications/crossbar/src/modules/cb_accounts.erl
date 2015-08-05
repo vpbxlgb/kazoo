@@ -1305,6 +1305,7 @@ create_account_definition(Context) ->
             throw(cb_context:add_system_error('datastore_fault', Context))
     end.
 
+-spec is_trial_account(cb_context:context()) -> wh_json:object().
 is_trial_account(Context) ->
     IsTrial = wh_json:is_true(<<"is_trial_account">>, cb_context:doc(Context)),
     Doc = wh_json:delete_key(<<"is_trial_account">>, cb_context:doc(Context)),
