@@ -1289,7 +1289,10 @@ create_account_definition(Context) ->
              ,{<<"pvt_created">>, TStamp}
              ,{<<"pvt_vsn">>, <<"1">>}
             ],
-    case couch_mgr:save_doc(AccountDb, wh_json:set_values(Props, cb_context:doc(Context))) of
+
+    Doc = is_trial_account(Context),
+
+    case couch_mgr:save_doc(AccountDb, wh_json:set_values(Props, Doc)) of
         {'ok', AccountDef}->
             _ = replicate_account_definition(AccountDef),
             cb_context:setters(Context
@@ -1300,6 +1303,16 @@ create_account_definition(Context) ->
         {'error', _R} ->
             lager:debug("unable to create account definition: ~p", [_R]),
             throw(cb_context:add_system_error('datastore_fault', Context))
+    end.
+
+is_trial_account(Context) ->
+    IsTrial = wh_json:is_true(<<"is_trial_account">>, cb_context:doc(Context)),
+    Doc = wh_json:delete_key(<<"is_trial_account">>, cb_context:doc(Context)),
+    case IsTrial of
+        'false' -> Doc;
+        'true' ->
+            TrialTime = whapps_config:get(?ACCOUNTS_CONFIG_CAT, <<"trial_time">>, (14 * ?SECONDS_IN_DAY)),
+            kz_account:set_trial_expiration(Doc, wh_util:current_tstamp() + TrialTime)
     end.
 
 -spec load_initial_views(cb_context:context()) -> 'ok'.
