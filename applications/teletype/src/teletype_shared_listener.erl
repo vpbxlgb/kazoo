@@ -96,6 +96,9 @@
                      ,{{'teletype_webhook_disabled', 'handle_webhook_disabled'}
                        ,[{<<"notification">>, <<"webhook_disabled">>}]
                       }
+                     ,{'teletype_account_trial_upgrade'
+                       ,[{<<"notification">>, <<"account_trial_upgrade">>}]
+                      }
                     ]).
 
 -define(RESTRICT_TO, ['new_voicemail'
@@ -120,6 +123,7 @@
                       ,'system_alerts'
                       ,'transaction'
                       ,'webhook_disabled'
+                      ,'account_trial_upgrade'
                       %%,'skel'
                       ,'topup'
                      ]).

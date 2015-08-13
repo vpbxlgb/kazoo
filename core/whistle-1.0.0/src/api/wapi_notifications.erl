@@ -38,6 +38,7 @@
          ,system_alert/1, system_alert_v/1
          ,webhook/1, webhook_v/1
          ,webhook_disabled/1, webhook_disabled_v/1
+         ,account_trial_upgrade/1, account_trial_upgrade_v/1
          %% published on completion of notification
          ,notify_update/1, notify_update_v/1
          ,skel/1, skel_v/1
@@ -71,6 +72,7 @@
          ,publish_system_alert/1, publish_system_alert/2
          ,publish_webhook/1, publish_webhook/2
          ,publish_webhook_disabled/1, publish_webhook_disabled/2
+         ,publish_account_trial_upgrade/1, publish_account_trial_upgrade/2
          ,publish_notify_update/2, publish_notify_update/3
          ,publish_skel/1, publish_skel/2
         ]).
@@ -114,6 +116,7 @@
 -define(NOTIFY_SYSTEM_ALERT, <<"notifications.system.alert">>).
 -define(NOTIFY_WEBHOOK_CALLFLOW, <<"notifications.webhook.callflow">>).
 -define(NOTIFY_WEBHOOK_DISABLED, <<"notifications.webhook.disabled">>).
+-define(NOTIFY_ACCOUNT_TRIAL_UPGRADE, <<"notifications.account.trial_upgrade">>).
 -define(NOTIFY_SKEL, <<"notifications.skel">>).
 
 %% Notify New Voicemail or Voicemail Saved
@@ -430,6 +433,16 @@
                               ]).
 -define(NOTIFY_UPDATE_TYPES, []).
 
+%% Notify when trial account upgrade
+-define(ACCOUNT_TRIAL_UPGRADE_HEADERS, [<<"Account-ID">>]).
+-define(OPTIONAL_ACCOUNT_TRIAL_UPGRADE_HEADERS, [<<"Account-DB">>
+                                                 | ?DEFAULT_OPTIONAL_HEADERS
+                                                ]).
+-define(ACCOUNT_TRIAL_UPGRADE_VALUES, [{<<"Event-Category">>, <<"notification">>}
+                             ,{<<"Event-Name">>, <<"account_trial_upgrade">>}
+                            ]).
+-define(ACCOUNT_TRIAL_UPGRADE_TYPES, []).
+
 %% Skeleton
 -define(SKEL_HEADERS, [<<"Account-ID">>, <<"User-ID">>]).
 -define(OPTIONAL_SKEL_HEADERS, ?DEFAULT_OPTIONAL_HEADERS).
@@ -487,6 +500,8 @@ headers(<<"port_comment">>) ->
     ?PORT_COMMENT_HEADERS ++ ?OPTIONAL_PORT_COMMENT_HEADERS;
 headers(<<"webhook_disabled">>) ->
     ?WEBHOOK_DISABLED_HEADERS ++ ?OPTIONAL_WEBHOOK_DISABLED_HEADERS;
+  headers(<<"account_trial_upgrade">>) ->
+    ?ACCOUNT_TRIAL_UPGRADE_HEADERS ++ ?OPTIONAL_ACCOUNT_TRIAL_UPGRADE_HEADERS;
 headers(_Notification) ->
     lager:warning("no notification headers for ~s", [_Notification]),
     [].
@@ -935,6 +950,23 @@ webhook_disabled_v(Prop) when is_list(Prop) ->
 webhook_disabled_v(JObj) -> webhook_disabled_v(wh_json:to_proplist(JObj)).
 
 %%--------------------------------------------------------------------
+%% @doc New account notification - see wiki
+%% Takes proplist, creates JSON string or error
+%% @end
+%%--------------------------------------------------------------------
+account_trial_upgrade(Prop) when is_list(Prop) ->
+    case account_trial_upgrade_v(Prop) of
+        'true' -> wh_api:build_message(Prop, ?ACCOUNT_TRIAL_UPGRADE_HEADERS, ?OPTIONAL_ACCOUNT_TRIAL_UPGRADE_HEADERS);
+        'false' -> {'error', "Proplist failed validation for account_trial_upgrade"}
+    end;
+account_trial_upgrade(JObj) -> account_trial_upgrade(wh_json:to_proplist(JObj)).
+
+-spec account_trial_upgrade_v(api_terms()) -> boolean().
+account_trial_upgrade_v(Prop) when is_list(Prop) ->
+    wh_api:validate(Prop, ?ACCOUNT_TRIAL_UPGRADE_HEADERS, ?ACCOUNT_TRIAL_UPGRADE_VALUES, ?ACCOUNT_TRIAL_UPGRADE_TYPES);
+account_trial_upgrade_v(JObj) -> account_trial_upgrade_v(wh_json:to_proplist(JObj)).
+
+%%--------------------------------------------------------------------
 %% @doc System alert notification - see wiki
 %% Takes proplist, creates JSON string or error
 %% @end
@@ -1094,6 +1126,9 @@ bind_to_q(Q, ['webhook'|T]) ->
 bind_to_q(Q, ['webhook_disabled'|T]) ->
     'ok' = amqp_util:bind_q_to_notifications(Q, ?NOTIFY_WEBHOOK_DISABLED),
     bind_to_q(Q, T);
+bind_to_q(Q, ['account_trial_upgrade'|T]) ->
+    'ok' = amqp_util:bind_q_to_notifications(Q, ?NOTIFY_ACCOUNT_TRIAL_UPGRADE),
+    bind_to_q(Q, T);
 bind_to_q(Q, ['skel'|T]) ->
     'ok' = amqp_util:bind_q_to_notifications(Q, ?NOTIFY_SKEL),
     bind_to_q(Q, T);
@@ -1189,6 +1224,9 @@ unbind_q_from(Q, ['webhook'|T]) ->
     unbind_q_from(Q, T);
 unbind_q_from(Q, ['webhook_disabled'|T]) ->
     'ok' = amqp_util:unbind_q_from_notifications(Q, ?NOTIFY_WEBHOOK_DISABLED),
+    unbind_q_from(Q, T);
+unbind_q_from(Q, ['account_trial_upgrade'|T]) ->
+    'ok' = amqp_util:unbind_q_from_notifications(Q, ?NOTIFY_ACCOUNT_TRIAL_UPGRADE),
     unbind_q_from(Q, T);
 unbind_q_from(Q, ['skel'|T]) ->
     'ok' = amqp_util:unbind_q_from_notifications(Q, ?NOTIFY_SKEL),
@@ -1390,6 +1428,12 @@ publish_webhook_disabled(API, ContentType) ->
     {'ok', Payload} = wh_api:prepare_api_payload(API, ?WEBHOOK_DISABLED_VALUES, fun ?MODULE:webhook_disabled/1),
     amqp_util:notifications_publish(?NOTIFY_WEBHOOK_DISABLED, Payload, ContentType).
 
+-spec publish_account_trial_upgrade(api_terms()) -> 'ok'.
+-spec publish_account_trial_upgrade(api_terms(), ne_binary()) -> 'ok'.
+publish_account_trial_upgrade(JObj) -> publish_account_trial_upgrade(JObj, ?DEFAULT_CONTENT_TYPE).
+publish_account_trial_upgrade(API, ContentType) ->
+    {'ok', Payload} = wh_api:prepare_api_payload(API, ?ACCOUNT_TRIAL_UPGRADE_VALUES, fun ?MODULE:account_trial_upgrade/1),
+    amqp_util:notifications_publish(?NOTIFY_ACCOUNT_TRIAL_UPGRADE, Payload, ContentType).
 
 -spec publish_notify_update(ne_binary(), api_terms()) -> 'ok'.
 -spec publish_notify_update(ne_binary(), api_terms(), ne_binary()) -> 'ok'.

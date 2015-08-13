@@ -404,6 +404,8 @@ publish_fun(<<"ported">>) ->
     fun wapi_notifications:publish_ported/1;
 publish_fun(<<"webhook_disabled">>) ->
     fun wapi_notifications:publish_webhook_disabled/1;
+publish_fun(<<"account_trial_upgrade">>) ->
+    fun wapi_notifications:publish_account_trial_upgrade/1;
 publish_fun(_Id) ->
     lager:debug("no wapi_notification:publish_~s/1 defined", [_Id]),
     fun(_Any) -> 'ok' end.
