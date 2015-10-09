@@ -162,6 +162,14 @@ participants_to_json(Participants) ->
 
 -spec participant_create(wh_proplist(), atom(), ne_binary()) -> participant().
 participant_create(Props, Node, CallId) ->
+    io:format("MARKER:ecallmgr_fs_conferences.erl:165 ~p~n", [Props]),
+    Cmd =
+        props:filter_undefined([
+            {<<"Conference-ID">>, props:get_value(<<"Conference-Name">>, Props)}
+            ,{<<"Call-ID">>, CallId}
+            | wh_api:default_headers(<<"conference">>, <<"participant_create">>, ?APP_NAME, ?APP_VERSION)
+        ]),
+    _ = wapi_conf_participant:publish_participant_create(Cmd),
     gen_server:call(?MODULE, {'participant_create', Props, Node, CallId}).
 
 -spec participant_update(ne_binary(), wh_proplist()) -> 'ok'.

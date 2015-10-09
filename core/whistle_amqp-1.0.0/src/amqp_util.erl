@@ -328,7 +328,9 @@ conference_publish(Payload, 'event') ->
 conference_publish(Payload, 'config') ->
     conference_publish(Payload, 'config', <<"*">>);
 conference_publish(Payload, 'command') ->
-    conference_publish(Payload, 'command', <<"*">>).
+    conference_publish(Payload, 'command', <<"*">>);
+  conference_publish(Payload, 'participant') ->
+    conference_publish(Payload, 'participant', <<"*">>).
 
 conference_publish(Payload, 'discovery', ConfId) ->
     conference_publish(Payload, 'discovery', ConfId, []);
@@ -337,7 +339,9 @@ conference_publish(Payload, 'config', ConfId) ->
 conference_publish(Payload, 'event', ConfId) ->
     conference_publish(Payload, 'event', ConfId, []);
 conference_publish(Payload, 'command', ConfId) ->
-    conference_publish(Payload, 'command', ConfId, []).
+    conference_publish(Payload, 'command', ConfId, []);
+conference_publish(Payload, 'participant', ConfProfile) ->
+    conference_publish(Payload, 'participant', ConfProfile, []).
 
 conference_publish(Payload, 'discovery', ConfId, Options) ->
     conference_publish(Payload, 'discovery', ConfId, Options, ?DEFAULT_CONTENT_TYPE);
@@ -346,7 +350,9 @@ conference_publish(Payload, 'config', ConfId, Options) ->
 conference_publish(Payload, 'event', ConfId, Options) ->
     conference_publish(Payload, 'event', ConfId, Options, ?DEFAULT_CONTENT_TYPE);
 conference_publish(Payload, 'command', ConfId, Options) ->
-    conference_publish(Payload, 'command', ConfId, Options, ?DEFAULT_CONTENT_TYPE).
+    conference_publish(Payload, 'command', ConfId, Options, ?DEFAULT_CONTENT_TYPE);
+conference_publish(Payload, 'participant', ConfProfile, Options) ->
+    conference_publish(Payload, 'participant', ConfProfile, Options, ?DEFAULT_CONTENT_TYPE).
 
 conference_publish(Payload, 'discovery', _, Options, ContentType) ->
     basic_publish(?EXCHANGE_CONFERENCE, ?KEY_CONFERENCE_DISCOVERY, Payload, ContentType, Options);
@@ -355,7 +361,9 @@ conference_publish(Payload, 'config', ConfProfile, Options, ContentType) ->
 conference_publish(Payload, 'event', ConfId, Options, ContentType) ->
     basic_publish(?EXCHANGE_CONFERENCE, <<?KEY_CONFERENCE_EVENT/binary, ConfId/binary>>, Payload, ContentType, Options);
 conference_publish(Payload, 'command', ConfId, Options, ContentType) ->
-    basic_publish(?EXCHANGE_CONFERENCE, <<?KEY_CONFERENCE_COMMAND/binary, ConfId/binary>>, Payload, ContentType, Options).
+    basic_publish(?EXCHANGE_CONFERENCE, <<?KEY_CONFERENCE_COMMAND/binary, ConfId/binary>>, Payload, ContentType, Options);
+conference_publish(Payload, 'participant', ConfProfile, Options, ContentType) ->
+    basic_publish(?EXCHANGE_CONFERENCE, <<?KEY_CONFERENCE_PARTICIPANT/binary, ConfProfile/binary>>, Payload, ContentType, Options).
 
 -spec registrar_publish(ne_binary(), amqp_payload()) -> 'ok'.
 -spec registrar_publish(ne_binary(), amqp_payload(), ne_binary()) -> 'ok'.
@@ -852,7 +860,9 @@ bind_q_to_conference(Queue, 'command') ->
 bind_q_to_conference(Queue, 'event') ->
     bind_q_to_conference(Queue, 'event', <<"*">>);
 bind_q_to_conference(Queue, 'config') ->
-    bind_q_to_conference(Queue, 'config', <<"*">>).
+    bind_q_to_conference(Queue, 'config', <<"*">>);
+bind_q_to_conference(Queue, 'participant') ->
+    bind_q_to_conference(Queue, 'participant', <<"*">>).
 
 bind_q_to_conference(Queue, 'discovery', _) ->
     bind_q_to_exchange(Queue, ?KEY_CONFERENCE_DISCOVERY, ?EXCHANGE_CONFERENCE);
@@ -861,7 +871,9 @@ bind_q_to_conference(Queue, 'event', ConfId) ->
 bind_q_to_conference(Queue, 'command', ConfId) ->
     bind_q_to_exchange(Queue, <<?KEY_CONFERENCE_COMMAND/binary, ConfId/binary>>, ?EXCHANGE_CONFERENCE);
 bind_q_to_conference(Queue, 'config', ConfProfile) ->
-    bind_q_to_exchange(Queue, <<?KEY_CONFERENCE_CONFIG/binary, ConfProfile/binary>>, ?EXCHANGE_CONFERENCE).
+    bind_q_to_exchange(Queue, <<?KEY_CONFERENCE_CONFIG/binary, ConfProfile/binary>>, ?EXCHANGE_CONFERENCE);
+bind_q_to_conference(Queue, 'participant', ConfProfile) ->
+    bind_q_to_exchange(Queue, <<?KEY_CONFERENCE_PARTICIPANT/binary, ConfProfile/binary>>, ?EXCHANGE_CONFERENCE).
 
 -spec bind_q_to_exchange(ne_binary(), ne_binary(), ne_binary()) -> 'ok'.
 -spec bind_q_to_exchange(ne_binary(), ne_binary(), ne_binary(), wh_proplist()) -> 'ok'.
@@ -896,7 +908,9 @@ unbind_q_from_conference(Queue, 'command') ->
 unbind_q_from_conference(Queue, 'config') ->
     unbind_q_from_conference(Queue, 'config', 'undefined');
 unbind_q_from_conference(Queue, 'event') ->
-    unbind_q_from_conference(Queue, 'event', <<"*">>).
+    unbind_q_from_conference(Queue, 'event', <<"*">>);
+unbind_q_from_conference(Queue, 'participant') ->
+    unbind_q_from_conference(Queue, 'participant', <<"*">>).
 
 unbind_q_from_conference(Queue, 'discovery', _) ->
     unbind_q_from_exchange(Queue, ?KEY_CONFERENCE_DISCOVERY, ?EXCHANGE_CONFERENCE);
@@ -905,7 +919,9 @@ unbind_q_from_conference(Queue, 'event', ConfId) ->
 unbind_q_from_conference(Queue, 'config', ConfProfile) ->
     unbind_q_from_exchange(Queue, <<?KEY_CONFERENCE_CONFIG/binary, ConfProfile/binary>>, ?EXCHANGE_CONFERENCE);
 unbind_q_from_conference(Queue, 'command', ConfId) ->
-    unbind_q_from_exchange(Queue, <<?KEY_CONFERENCE_COMMAND/binary, ConfId/binary>>, ?EXCHANGE_CONFERENCE).
+    unbind_q_from_exchange(Queue, <<?KEY_CONFERENCE_COMMAND/binary, ConfId/binary>>, ?EXCHANGE_CONFERENCE);
+unbind_q_from_conference(Queue, 'participant', ConfProfile) ->
+    unbind_q_from_exchange(Queue, <<?KEY_CONFERENCE_PARTICIPANT/binary, ConfProfile/binary>>, ?EXCHANGE_CONFERENCE).
 
 unbind_q_from_callctl(Queue) ->
     unbind_q_from_exchange(Queue, Queue, ?EXCHANGE_CALLCTL).
