@@ -85,7 +85,7 @@
 %%--------------------------------------------------------------------
 -spec start_link(whapps_call:call()) -> startlink_ret().
 start_link(Call) ->
-    CallId = whapps_call:call_id(Call),
+    CallId = whapps_call:call_id_direct(Call),
     Bindings = [{'call', [{'callid', CallId}]}
                 ,{'self', []}
                ],
@@ -299,7 +299,7 @@ send_amqp(Call, API, PubFun) when is_function(PubFun, 1) ->
 %%--------------------------------------------------------------------
 init([Call]) ->
     process_flag('trap_exit', 'true'),
-    CallId = whapps_call:call_id(Call),
+    CallId = whapps_call:call_id_direct(Call),
     wh_util:put_callid(CallId),
     gen_listener:cast(self(), 'initialize'),
     {'ok', #state{call=Call
