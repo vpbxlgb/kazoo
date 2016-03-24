@@ -123,6 +123,7 @@ handle_tx_resp(JObj, Props) ->
 
 
 handle_fax_event(JObj, Props) ->
+    lager:info("received fax channel status : ~p", [JObj]),
     Srv = props:get_value('server', Props),
     JobId = wh_json:get_value([<<"Custom-Channel-Vars">>,<<"Authorizing-ID">>], JObj),
     Event = wh_json:get_value(<<"Application-Event">>, JObj),
@@ -232,7 +233,7 @@ handle_cast({'channel_destroy', JobId2, _JObj}, #state{job_id=JobId}=State) ->
 handle_cast({'fax_status', <<"negociateresult">>, JobId, JObj}, State) ->
     Data = wh_json:get_value(<<"Application-Data">>, JObj, wh_json:new()),
     TransferRate = wh_json:get_integer_value(<<"Fax-Transfer-Rate">>, Data, 1),
-    lager:debug("fax status - negociate result - ~s : ~p",[JobId, TransferRate]),
+    lager:info("fax status - negociate result - ~s : ~p",[JobId, TransferRate]),
     Status = list_to_binary(["Fax negotiated at ", wh_util:to_list(TransferRate)]),
     send_status(State, Status, Data),
     {'noreply', State#state{status=Status
@@ -243,7 +244,7 @@ handle_cast({'fax_status', <<"pageresult">>, JobId, JObj}
            ) ->
     Data = wh_json:get_value(<<"Application-Data">>, JObj, wh_json:new()),
     Page = wh_json:get_integer_value(<<"Fax-Transferred-Pages">>, Data, 0),
-    lager:debug("fax status - page result - ~s : ~p : ~p"
+    lager:info("fax status - page result - ~s : ~p : ~p"
                 ,[JobId, Page, wh_util:current_tstamp()]
                ),
     Status = list_to_binary(["Sent Page ", wh_util:to_list(Page), " of ", wh_util:to_list(Pages)]),
@@ -258,6 +259,7 @@ handle_cast({'fax_status', <<"result">>, JobId, JObj}
                     ,pool=Pid
                    }=State
            ) ->
+    lager:info("fax status - result - ~s : ~p", [JobId, JObj]),
     Data = wh_json:get_value(<<"Application-Data">>, JObj, wh_json:new()),
     case wh_json:is_true([<<"Application-Data">>, <<"Fax-Success">>], JObj) of
         'true' ->
