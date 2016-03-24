@@ -768,11 +768,13 @@ specific_call_event_props(_, <<"play_and_get_digits">>, Props) ->
 specific_call_event_props(<<"FAX_DETECTED">>, _, _Props) ->
     [{<<"Application-Name">>, <<"fax_detection">>}];
 specific_call_event_props(<<"CHANNEL_FAX_STATUS">>, <<"rxfax", Event/binary>>, Prop) ->
+    lager:info("channel receive fax ~s", [Event]),
     [{<<"Application-Name">>, <<"receive_fax">>}
     ,{<<"Application-Event">>, Event}
     ,{<<"Application-Data">>, wh_json:from_list(fax_specific(Prop))}
     ];
 specific_call_event_props(<<"CHANNEL_FAX_STATUS">>, <<"txfax", Event/binary>>, Prop) ->
+    lager:info("channel send fax ~s", [Event]),
     [{<<"Application-Name">>, <<"send_fax">>}
     ,{<<"Application-Event">>, Event}
     ,{<<"Application-Data">>, wh_json:from_list(fax_specific(Prop))}
