@@ -388,6 +388,12 @@ maybe_send_event(<<"CHANNEL_DESTROY">> = EventName, UUID, Props, Node) ->
         {'error', 'not_found'} ->
             lager:debug("dropping channel destroy from ~s (no such channel)", [Node])
     end;
+maybe_send_event(<<"rxfax", Event/binary>>=EventName, UUID, Props, Node) ->
+    lager:info("receive fax ~s", [Event]),
+    send_event(EventName, UUID, Props, Node);
+maybe_send_event(<<"txfax", Event/binary>>=EventName, UUID, Props, Node) ->
+    lager:info("send fax ~s", [Event]),
+    send_event(EventName, UUID, Props, Node);
 maybe_send_event(EventName, UUID, Props, Node) ->
     wh_util:put_callid(UUID),
     case wh_util:is_true(props:get_value(<<"variable_channel_is_moving">>, Props)) of
