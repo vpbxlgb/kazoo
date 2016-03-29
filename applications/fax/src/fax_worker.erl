@@ -229,7 +229,7 @@ handle_cast({'channel_destroy', JobId, JObj}, #state{job_id=JobId
             lager:info("processing fax on channel destroy for ~s : ~p",[JobId, JObj]),
             Data = wh_json:get_value(<<"Fax-Info">>, JObj, wh_json:new()),
             send_status(State, <<"Fax Successfuly sent">>, ?FAX_END, Data),
-            release_successful_job(JObj, Job);
+            release_successful_job(wh_json:set_value(<<"Application-Data">>, Data, JObj), Job);
         'false' ->
             send_error_status(State, wh_json:get_value(<<"Hangup-Cause">>, JObj)),
             release_failed_job('channel_destroy', JObj, Job)
