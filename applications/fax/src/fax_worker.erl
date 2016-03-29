@@ -219,9 +219,21 @@ handle_cast({'channel_destroy', JobId, JObj}, #state{job_id=JobId
                                                      ,pool=Pid
                                                      ,fax_status='undefined'
                                                     }=State) ->
-    lager:debug("received channel destroy for ~s : ~p",[JobId, JObj]),
-    send_error_status(State, wh_json:get_value(<<"Hangup-Cause">>, JObj)),
-    _ = release_failed_job('channel_destroy', JObj, Job),
+      lager:debug("received channel destroy for ~s : ~p",[JobId, JObj]),
+%%    send_error_status(State, wh_json:get_value(<<"Hangup-Cause">>, JObj)),
+%%    _ = release_failed_job('channel_destroy', JObj, Job),
+%%    gen_server:cast(Pid, {'job_complete', self()}),
+
+    case wh_json:is_true([<<"Fax-Info">>, <<"Fax-Success">>], JObj) of
+        'true' ->
+            lager:info("processing fax on channel destroy for ~s : ~p",[JobId, JObj]),
+            Data = wh_json:get_value(<<"Fax-Info">>, JObj, wh_json:new()),
+            send_status(State, <<"Fax Successfuly sent">>, ?FAX_END, Data),
+            release_successful_job(JObj, Job);
+        'false' ->
+            send_error_status(State, wh_json:get_value(<<"Hangup-Cause">>, JObj)),
+            release_failed_job('channel_destroy', JObj, Job)
+    end,
     gen_server:cast(Pid, {'job_complete', self()}),
     {'noreply', reset(State)};
 handle_cast({'channel_destroy', JobId, _JObj}, #state{job_id=JobId}=State) ->
@@ -272,7 +284,7 @@ handle_cast({'fax_status', <<"result">>, JobId, JObj}
     gen_server:cast(Pid, {'job_complete', self()}),
     {'noreply', reset(State)};
 handle_cast({'fax_status', Event, JobId, _}, State) ->
-    lager:debug("fax status ~s - ~s event not handled",[JobId, Event]),
+    lager:info("fax status ~s - ~s event not handled",[JobId, Event]),
     {'noreply', State};
 handle_cast({'query_status', JobId, Queue, MsgId, _JObj}
             ,#state{status=Status
