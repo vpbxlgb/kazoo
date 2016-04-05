@@ -14,7 +14,7 @@ add_trace(Pid) ->
 add_trace(Pid, CollectFor) ->
     spawn(fun() ->
                   io:format("started trace for ~p in ~p~n", [Pid, self()]),
-                  BinFile = wh_util:to_list(<<"/home/james/eflame.trace">>),
+                  BinFile = wh_util:to_list(<<"/tmp/eflame.trace">>),
                   eflame2:write_trace('global_and_local_calls_plus_new_procs'
                                      ,BinFile
                                      ,Pid
