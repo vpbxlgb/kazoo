@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% @copyright (C) 2012-2015, 2600Hz INC
+%%% @copyright (C) 2012-2016, 2600Hz INC
 %%% @doc
 %%%
 %%% @end
@@ -234,11 +234,14 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 -spec start_cleanup_pass(reference()) -> 'ok'.
 start_cleanup_pass(Ref) ->
-    wh_util:put_callid(<<"cleanup_pass">>),
+    wh_util:put_callid(<<"cleanup_pass_", (wh_util:rand_hex_binary(4))/binary>>),
     {'ok', Dbs} = kz_datamgr:db_info(),
     lager:debug("starting cleanup pass of databases"),
 
-    _ = [crossbar_bindings:map(db_routing_key(Db), Db)
+    _ = [begin
+             crossbar_bindings:map(db_routing_key(Db), Db),
+             erlang:garbage_collect(self())
+         end
          || Db <- Dbs
         ],
     lager:debug("pass completed for ~p", [Ref]),
