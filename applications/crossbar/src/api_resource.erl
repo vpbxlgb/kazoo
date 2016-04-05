@@ -93,8 +93,8 @@ maybe_trace(Req, 'true') ->
 -spec maybe_start_trace(boolean()) -> 'ok'.
 maybe_start_trace('false') -> 'ok';
 maybe_start_trace('true') ->
-    _P = kz_tracers:add_trace(self()),
-    lager:debug("added trace in ~p", [_P]).
+    _P = kz_tracers:add_trace(self(), 5*1000),
+    lager:info("added trace in ~p", [_P]).
 
 -spec rest_init(cowboy_req:req(), wh_proplist()) ->
                        {'ok', cowboy_req:req(), cb_context:context()}.
@@ -137,7 +137,7 @@ rest_init(Req0, Opts) ->
 
     case api_util:get_req_data(Context0, Req7) of
         {'halt', Req8, Context1} ->
-            lager:debug("getting request data failed, halting"),
+            lager:info("getting request data failed, halting"),
             {Req9, Context2} = api_util:get_auth_token(Req8, Context1),
             {'ok', Req9, Context2};
         {Context1, Req8} ->
