@@ -57,6 +57,7 @@ You can also remove the SLEEP time:
 
 ```shell
 kazoo/deps/eflame$ cat /tmp/eflame.trace.out | grep -v 'SLEEP ' | ./flamegraph.riak-color.pl > /tmp/eflame.svg
+```
 
 #### Issues
 
