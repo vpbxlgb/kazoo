@@ -152,11 +152,16 @@ rest_init(Req0, Opts) ->
 metrics() ->
     {wh_util:bin_usage(), wh_util:mem_usage()}.
 
+-spec find_version(ne_binary()) ->
+                          {ne_binary(), cowboy_req:req()}.
+-spec find_version(ne_binary(), cowboy_req:req()) ->
+                          {ne_binary(), cowboy_req:req()}.
 find_version(Path, Req) ->
     case cowboy_req:binding('version', Req) of
         {'undefined', Req1} -> {find_version(Path), Req1};
         {_Version, _Req1}=Found -> Found
     end.
+
 find_version(Path) ->
     lager:debug("find version in ~s", [Path]),
     case binary:split(Path, <<"/">>, ['global']) of
