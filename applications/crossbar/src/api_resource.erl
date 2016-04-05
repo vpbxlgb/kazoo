@@ -152,8 +152,7 @@ rest_init(Req0, Opts) ->
 metrics() ->
     {wh_util:bin_usage(), wh_util:mem_usage()}.
 
--spec find_version(ne_binary()) ->
-                          {ne_binary(), cowboy_req:req()}.
+-spec find_version(ne_binary()) -> ne_binary().
 -spec find_version(ne_binary(), cowboy_req:req()) ->
                           {ne_binary(), cowboy_req:req()}.
 find_version(Path, Req) ->
