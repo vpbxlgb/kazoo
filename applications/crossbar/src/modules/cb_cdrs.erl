@@ -102,6 +102,7 @@ init() ->
     cb_modules_util:bind(?MODULE, Bindings).
 
 -spec to_csv(payload()) -> payload().
+-spec to_csv(payload(), wh_proplist()) -> payload().
 to_csv({_Req, Context}=Payload) ->
     to_csv(Payload, cb_context:req_nouns(Context)).
 
