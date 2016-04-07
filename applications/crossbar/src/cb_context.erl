@@ -625,6 +625,31 @@ failed(Context, Errors) ->
 
 failed_error({'data_invalid'
               ,FailedSchemaJObj
+              ,'wrong_length'
+              ,FailedValue
+              ,FailedKeyPath
+             }, Context) ->
+    Minimum = wh_json:get_value(<<"minLength">>, FailedSchemaJObj),
+    Maximum = wh_json:get_value(<<"maxLength">>, FailedSchemaJObj),
+
+    case byte_size(FailedValue) of
+        N when N < Minimum ->
+            failed_error({'data_invalid'
+                          ,FailedSchemaJObj
+                          ,'wrong_min_length'
+                          ,FailedValue
+                          ,FailedKeyPath
+                         }, Context);
+        N when N > Maximum ->
+            failed_error({'data_invalid'
+                          ,FailedSchemaJObj
+                          ,'wrong_max_length'
+                          ,FailedValue
+                          ,FailedKeyPath
+                         }, Context)
+    end;
+failed_error({'data_invalid'
+              ,FailedSchemaJObj
               ,'wrong_min_length'
               ,_FailedValue
               ,FailedKeyPath
