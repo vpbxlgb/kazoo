@@ -198,7 +198,6 @@ start_chunked_response(Req) ->
 start_chunked_response(Req, Headers) ->
     cowboy_req:chunked_reply(200, props:set_values(Headers, cowboy_req:get('resp_headers', Req)), Req).
 
-
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -213,11 +212,10 @@ start_chunked_response(Req, Headers) ->
 -spec allowed_methods(path_token(), path_token()) -> http_methods().
 allowed_methods() ->
     [?HTTP_GET].
-allowed_methods(_) ->
+allowed_methods(_CDRId) ->
     [?HTTP_GET].
-allowed_methods(?PATH_LEGS, _) ->
-    [?HTTP_GET];
-allowed_methods(_ , _) -> [].
+allowed_methods(?PATH_LEGS, _InteractionId) ->
+    [?HTTP_GET].
 
 %%--------------------------------------------------------------------
 %% @private
