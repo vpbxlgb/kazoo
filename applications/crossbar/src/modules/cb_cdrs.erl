@@ -212,6 +212,8 @@ start_chunked_response(Req, Headers) ->
 -spec allowed_methods(path_token(), path_token()) -> http_methods().
 allowed_methods() ->
     [?HTTP_GET].
+allowed_methods(?PATH_INTERACTION) ->
+    [?HTTP_GET];
 allowed_methods(_CDRId) ->
     [?HTTP_GET].
 allowed_methods(?PATH_LEGS, _InteractionId) ->
@@ -229,9 +231,8 @@ allowed_methods(?PATH_LEGS, _InteractionId) ->
 -spec resource_exists(path_token()) -> boolean().
 -spec resource_exists(path_token(), path_token()) -> boolean().
 resource_exists() -> 'true'.
-resource_exists(_) -> 'true'.
-resource_exists(?PATH_LEGS, _) -> 'true';
-resource_exists(_, _) -> 'false'.
+resource_exists(_CDRId) -> 'true'.
+resource_exists(?PATH_LEGS, _InteractionId) -> 'true'.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -268,9 +269,7 @@ validate(Context, CDRId) ->
     load_cdr(CDRId, Context).
 
 validate(Context, ?PATH_LEGS, InteractionId) ->
-    load_legs(InteractionId, Context);
-validate(Context, _, _) ->
-    cb_context:add_system_error('invalid request', Context).
+    load_legs(InteractionId, Context).
 
 %%--------------------------------------------------------------------
 %% @private
