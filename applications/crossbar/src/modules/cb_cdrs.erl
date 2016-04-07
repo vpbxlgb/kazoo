@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% @copyright (C) 2011-2015, 2600Hz INC
+%%% @copyright (C) 2011-2016, 2600Hz INC
 %%% @doc
 %%%
 %%% CDR
@@ -16,14 +16,16 @@
 -module(cb_cdrs).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1, allowed_methods/2
-         ,resource_exists/0, resource_exists/1, resource_exists/2
-         ,content_types_provided/1
-         ,validate/1, validate/2, validate/3
-         ,to_json/1
-         ,to_csv/1
+        ,allowed_methods/0, allowed_methods/1, allowed_methods/2
+        ,resource_exists/0, resource_exists/1, resource_exists/2
+        ,content_types_provided/1
+        ,validate/1, validate/2, validate/3
+        ,to_json/1
+        ,to_csv/1
         ]).
--export([pagination/1]).
+
+-export([send_chunked_pagination/1]).
+
 -export([fetch_view_options/1]).
 -export([get_cdr_ids/3]).
 -export([maybe_paginate_and_clean/2]).
@@ -46,42 +48,42 @@
 
 -define(COLUMNS
         ,[{<<"id">>, fun col_id/2}
-          ,{<<"call_id">>, fun col_call_id/2}
-          ,{<<"caller_id_number">>, fun col_caller_id_number/2}
-          ,{<<"caller_id_name">>, fun col_caller_id_name/2}
-          ,{<<"callee_id_number">>, fun col_callee_id_number/2}
-          ,{<<"callee_id_name">>, fun col_callee_id_name/2}
-          ,{<<"duration_seconds">>, fun col_duration_seconds/2}
-          ,{<<"billing_seconds">>, fun col_billing_seconds/2}
-          ,{<<"timestamp">>, fun col_timestamp/2}
-          ,{<<"hangup_cause">>, fun col_hangup_cause/2}
-          ,{<<"other_leg_call_id">>, fun col_other_leg_call_id/2}
-          ,{<<"owner_id">>, fun col_owner_id/2}
-          ,{<<"to">>, fun col_to/2}
-          ,{<<"from">>, fun col_from/2}
-          ,{<<"direction">>, fun col_call_direction/2}
-          ,{<<"request">>, fun col_request/2}
-          ,{<<"authorizing_id">>, fun col_authorizing_id/2}
-          ,{<<"cost">>, fun col_customer_cost/2}
+         ,{<<"call_id">>, fun col_call_id/2}
+         ,{<<"caller_id_number">>, fun col_caller_id_number/2}
+         ,{<<"caller_id_name">>, fun col_caller_id_name/2}
+         ,{<<"callee_id_number">>, fun col_callee_id_number/2}
+         ,{<<"callee_id_name">>, fun col_callee_id_name/2}
+         ,{<<"duration_seconds">>, fun col_duration_seconds/2}
+         ,{<<"billing_seconds">>, fun col_billing_seconds/2}
+         ,{<<"timestamp">>, fun col_timestamp/2}
+         ,{<<"hangup_cause">>, fun col_hangup_cause/2}
+         ,{<<"other_leg_call_id">>, fun col_other_leg_call_id/2}
+         ,{<<"owner_id">>, fun col_owner_id/2}
+         ,{<<"to">>, fun col_to/2}
+         ,{<<"from">>, fun col_from/2}
+         ,{<<"direction">>, fun col_call_direction/2}
+         ,{<<"request">>, fun col_request/2}
+         ,{<<"authorizing_id">>, fun col_authorizing_id/2}
+         ,{<<"cost">>, fun col_customer_cost/2}
           %% New fields
-          ,{<<"dialed_number">>, fun col_dialed_number/2}
-          ,{<<"calling_from">>, fun col_calling_from/2}
-          ,{<<"datetime">>, fun col_pretty_print/2}
-          ,{<<"unix_timestamp">>, fun col_unix_timestamp/2}
-          ,{<<"rfc_1036">>, fun col_rfc1036/2}
-          ,{<<"iso_8601">>, fun col_iso8601/2}
-          ,{<<"call_type">>, fun col_account_call_type/2}
-          ,{<<"rate">>, fun col_rate/2}
-          ,{<<"rate_name">>, fun col_rate_name/2}
-          ,{<<"bridge_id">>, fun col_bridge_id/2}
-          ,{<<"recording_url">>, fun col_recording_url/2}
-          ,{<<"call_priority">>, fun col_call_priority/2}
+         ,{<<"dialed_number">>, fun col_dialed_number/2}
+         ,{<<"calling_from">>, fun col_calling_from/2}
+         ,{<<"datetime">>, fun col_pretty_print/2}
+         ,{<<"unix_timestamp">>, fun col_unix_timestamp/2}
+         ,{<<"rfc_1036">>, fun col_rfc1036/2}
+         ,{<<"iso_8601">>, fun col_iso8601/2}
+         ,{<<"call_type">>, fun col_account_call_type/2}
+         ,{<<"rate">>, fun col_rate/2}
+         ,{<<"rate_name">>, fun col_rate_name/2}
+         ,{<<"bridge_id">>, fun col_bridge_id/2}
+         ,{<<"recording_url">>, fun col_recording_url/2}
+         ,{<<"call_priority">>, fun col_call_priority/2}
          ]).
 
 -define(COLUMNS_RESELLER
-        ,[{<<"reseller_cost">>, fun col_reseller_cost/2}
-          ,{<<"reseller_call_type">>, fun col_reseller_call_type/2}
-         ]).
+       ,[{<<"reseller_cost">>, fun col_reseller_cost/2}
+        ,{<<"reseller_call_type">>, fun col_reseller_call_type/2}
+        ]).
 
 -type payload() :: {cowboy_req:req(), cb_context:context()}.
 -export_type([payload/0]).
@@ -90,42 +92,75 @@
 %%% Internal functions
 %%%===================================================================
 init() ->
-    _ = crossbar_bindings:bind(<<"*.allowed_methods.cdrs">>, ?MODULE, 'allowed_methods'),
-    _ = crossbar_bindings:bind(<<"*.resource_exists.cdrs">>, ?MODULE, 'resource_exists'),
-    _ = crossbar_bindings:bind(<<"*.content_types_provided.cdrs">>, ?MODULE, 'content_types_provided'),
-    _ = crossbar_bindings:bind(<<"*.to_json.get.cdrs">>, ?MODULE, 'to_json'),
-    _ = crossbar_bindings:bind(<<"*.to_csv.get.cdrs">>, ?MODULE, 'to_csv'),
-    _ = crossbar_bindings:bind(<<"*.validate.cdrs">>, ?MODULE, 'validate').
+    Bindings = [{<<"*.allowed_methods.cdrs">>, 'allowed_methods'}
+               ,{<<"*.resource_exists.cdrs">>, 'resource_exists'}
+               ,{<<"*.content_types_provided.cdrs">>, 'content_types_provided'}
+               ,{<<"*.validate.cdrs">>, 'validate'}
+               ,{<<"*.to_json.get.cdrs">>, 'to_json'}
+               ,{<<"*.to_csv.get.cdrs">>, 'to_csv'}
+               ],
+    cb_modules_util:bind(?MODULE, Bindings).
 
--spec to_json(payload()) -> payload().
-to_json({Req, Context}) ->
-    Nouns = cb_context:req_nouns(Context),
+-spec to_csv(payload()) -> payload().
+to_csv({_Req, Context}=Payload) ->
+    to_csv(Payload, cb_context:req_nouns(Context)).
+
+to_csv(Payload, Nouns) ->
     case props:get_value(<<"cdrs">>, Nouns, []) of
-        [] -> to_json(Req, Context);
-        [?PATH_INTERACTION] -> to_json(Req, cb_context:store(Context, 'interaction', 'true'));
-        [_|_] -> {Req, Context}
+        [] -> build_csv_response(Payload);
+        [?PATH_INTERACTION] -> build_csv_response(Payload);
+        [_|_] -> Payload
     end.
 
--spec to_json(cowboy_req:req(), cb_context:context()) -> payload().
-to_json(Req0, Context) ->
-    Headers = cowboy_req:get('resp_headers', Req0),
-    {'ok', Req1} = cowboy_req:chunked_reply(200, Headers, Req0),
+-spec build_csv_response(payload()) -> payload().
+build_csv_response({Req, Context}) ->
+    Headers = [{<<"content-type">>, <<"application/octet-stream">>}
+              ,{<<"content-disposition">>, <<"attachment; filename=\"cdrs.csv\"">>}
+              ],
+    {'ok', Req1} = start_chunked_response(Req, Headers),
+
+    Context1 = cb_context:store(Context, 'is_csv', 'true'),
+    {Req2, _} = send_chunked_cdrs({Req1, Context1}),
+    {Req2, cb_context:store(Context1,'is_chunked', 'true')}.
+
+-spec to_json(payload()) -> payload().
+to_json({_Req, Context}=Payload) ->
+    to_json(Payload, cb_context:req_nouns(Context)).
+
+-spec to_json(payload(), req_nouns()) -> payload().
+to_json({Req, Context}=Payload, Nouns) ->
+    case props:get_value(<<"cdrs">>, Nouns, []) of
+        [] -> build_json_response(Payload);
+        [?PATH_INTERACTION] -> build_json_response({Req, cb_context:store(Context, 'interaction', 'true')});
+        [_|_] -> Payload
+    end.
+
+-spec build_json_response(payload()) -> payload().
+build_json_response({Req0, Context}) ->
+    {'ok', Req1} = start_chunked_response(Req0),
     'ok' = cowboy_req:chunk("{\"status\":\"success\", \"data\":[", Req1),
+
     {Req2, Context1} = send_chunked_cdrs({Req1, Context}),
+
     'ok' = cowboy_req:chunk("]", Req2),
-    _ = pagination({Req2, Context1}),
+
+    _ = send_chunked_pagination({Req2, Context1}),
+
     'ok' = cowboy_req:chunk([",\"request_id\":\"", cb_context:req_id(Context), "\""
                              ,",\"auth_token\":\"", cb_context:auth_token(Context), "\""
                              ,"}"
                             ]
                             ,Req2
                            ),
+
     {Req2, cb_context:store(Context1, 'is_chunked', 'true')}.
 
--spec pagination(payload()) -> payload().
-pagination({Req, Context}=Payload) ->
+-spec send_chunked_pagination(payload()) -> payload().
+send_chunked_pagination({Req, Context}=Payload) ->
     PageSize = cb_context:fetch(Context, 'page_size', 0),
-    'ok' = cowboy_req:chunk(<<", \"page_size\": ", (wh_util:to_binary(PageSize))/binary>>, Req),
+
+    'ok' = cowboy_req:chunk(<<",\"page_size\":", (wh_util:to_binary(PageSize))/binary>>, Req),
+
     IsInteraction = cb_context:fetch(Context, 'interaction', 'false'),
     case pagination_key(IsInteraction, 'next_start_key', Context) of
         'ok' -> 'ok';
@@ -153,26 +188,16 @@ pagination_key('true', PaginationKey, Context) ->
         Key -> Key
     end.
 
--spec to_csv(payload()) -> payload().
-to_csv({Req, Context}) ->
-    Nouns = cb_context:req_nouns(Context),
-    case props:get_value(<<"cdrs">>, Nouns, []) of
-        [] -> to_csv(Req, Context);
-        [?PATH_INTERACTION] -> to_csv(Req, Context);
-        [_|_] -> {Req, Context}
-    end.
+-spec start_chunked_response(cowboy_req:req()) ->
+                                    {'ok', cowboy_req:req()}.
+-spec start_chunked_response(cowboy_req:req(), wh_proplist()) ->
+                                    {'ok', cowboy_req:req()}.
+start_chunked_response(Req) ->
+    start_chunked_response(Req, []).
 
--spec to_csv(cowboy_req:req(), cb_context:context()) -> payload().
-to_csv(Req, Context) ->
-    Headers = props:set_values([{<<"content-type">>, <<"application/octet-stream">>}
-                                ,{<<"content-disposition">>, <<"attachment; filename=\"cdrs.csv\"">>}
-                               ]
-                               ,cowboy_req:get('resp_headers', Req)
-                              ),
-    {'ok', Req1} = cowboy_req:chunked_reply(200, Headers, Req),
-    Context1 = cb_context:store(Context, 'is_csv', 'true'),
-    {Req2, _} = send_chunked_cdrs({Req1, Context1}),
-    {Req2, cb_context:store(Context1,'is_chunked', 'true')}.
+start_chunked_response(Req, Headers) ->
+    cowboy_req:chunked_reply(200, props:set_values(Headers, cowboy_req:get('resp_headers', Req)), Req).
+
 
 %%--------------------------------------------------------------------
 %% @private
