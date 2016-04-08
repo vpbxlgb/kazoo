@@ -93,8 +93,8 @@ maybe_trace(Req, 'true') ->
 -spec maybe_start_trace(boolean()) -> 'ok'.
 maybe_start_trace('false') -> 'ok';
 maybe_start_trace('true') ->
-    _P = kz_tracers:add_trace(self(), 5*1000),
-    lager:info("added trace in ~p", [_P]).
+    'ok' = kz_tracers:add_trace(self(), 5*1000),
+    lager:info("added trace").
 
 -spec rest_init(cowboy_req:req(), wh_proplist()) ->
                        {'ok', cowboy_req:req(), cb_context:context()}.
@@ -718,8 +718,8 @@ to_json(Req0, Context0, 'undefined') ->
     [{Mod, _Params}|_] = cb_context:req_nouns(Context0),
     Verb = cb_context:req_verb(Context0),
     Event = api_util:create_event_name(Context0, [<<"to_json">>
-                                                      ,wh_util:to_lower_binary(Verb)
-                                                  ,Mod
+                                                 ,wh_util:to_lower_binary(Verb)
+                                                 ,Mod
                                                  ]),
     {Req1, Context1} = crossbar_bindings:fold(Event, {Req0, Context0}),
     case cb_context:fetch(Context1, 'is_chunked') of
