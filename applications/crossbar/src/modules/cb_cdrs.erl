@@ -281,15 +281,20 @@ validate(Context, ?PATH_LEGS, InteractionId) ->
 %%--------------------------------------------------------------------
 -spec load_cdr_summary(cb_context:context(), req_nouns()) -> cb_context:context().
 load_cdr_summary(Context, [_, {?WH_ACCOUNTS_DB, [_]} | _]) ->
-    lager:debug("loading cdrs for account ~s", [cb_context:account_id(Context)]),
-    case create_view_options('undefined', Context) of
-        {'ok', ViewOptions} ->
-            load_view(?CB_LIST
-                      ,props:filter_undefined(ViewOptions)
-                      ,remove_qs_keys(Context)
-                     );
-        Else -> Else
-    end;
+    StartMem = wh_util:mem_usage(),
+    lager:debug("loading cdrs for account ~s: ~p"
+               ,[cb_context:account_id(Context), StartMem]
+               ),
+    Result = case create_view_options('undefined', Context) of
+                 {'ok', ViewOptions} ->
+                     load_view(?CB_LIST
+                              ,props:filter_undefined(ViewOptions)
+                              ,remove_qs_keys(Context)
+                              );
+                 Else -> Else
+             end,
+    lager:debug("started at ~p, used ~p", [StartMem, wh_util:mem_usage() - StartMem]),
+    Result;
 load_cdr_summary(Context, [_, {<<"users">>, [UserId] } | _]) ->
     lager:debug("loading cdrs for user ~s", [UserId]),
     case create_view_options(UserId, Context) of
@@ -471,18 +476,29 @@ send_chunked_cdrs({Req, Context}) ->
     Dbs = cb_context:fetch(Context, 'chunked_dbs'),
     AuthAccountId = cb_context:auth_account_id(Context),
     IsReseller = wh_services:is_reseller(AuthAccountId),
-    send_chunked_cdrs(Dbs, {Req, cb_context:store(Context, 'is_reseller', IsReseller)}).
+    send_chunked_cdrs({Req, cb_context:store(Context, 'is_reseller', IsReseller)}, Dbs).
 
--spec send_chunked_cdrs(ne_binaries(), payload()) -> payload().
-send_chunked_cdrs([], Payload) -> Payload;
-send_chunked_cdrs([Db | Dbs], {Req, Context}) ->
+-spec send_chunked_cdrs(payload(), ne_binaries()) -> payload().
+send_chunked_cdrs(Payload, []) ->
+    lager:debug("final mem usage ~p", [wh_util:mem_usage()]),
+    Payload;
+send_chunked_cdrs({Req, Context}, [Db | Dbs]) ->
+    StartMem = wh_util:mem_usage(),
     View = cb_context:fetch(Context, 'chunked_view'),
     ViewOptions = fetch_view_options(Context),
     Context1 = cb_context:store(Context, 'start_key', props:get_value('startkey', ViewOptions)),
     Context2 = cb_context:store(Context1, 'page_size', 0),
     {'ok', Ids} = get_cdr_ids(Db, View, ViewOptions),
+    CDRMem = wh_util:mem_usage(),
     {Context3, CDRIds} = maybe_paginate_and_clean(Context2, Ids),
-    send_chunked_cdrs(Dbs, load_chunked_cdrs(Db, CDRIds, {Req, Context3})).
+    PagMem = wh_util:mem_usage(),
+    lager:debug("started at ~p after cdr ~p (~p) after paginate ~p (~p)"
+               ,[StartMem
+                ,CDRMem, CDRMem - StartMem
+                 ,PagMem, PagMem - StartMem
+                ]
+               ),
+    send_chunked_cdrs(load_chunked_cdrs(Db, CDRIds, {Req, Context3}), Dbs).
 
 -spec fetch_view_options(cb_context:context()) -> crossbar_doc:view_options().
 fetch_view_options(Context) ->
@@ -528,6 +544,7 @@ paginate_and_clean(Context, Ids) ->
 -spec get_cdr_ids(ne_binary(), ne_binary(), kz_datamgr:view_options()) ->
                          {'ok', wh_proplist()}.
 get_cdr_ids(Db, View, ViewOptions) ->
+    StartMem = wh_util:mem_usage(),
     _ = maybe_add_design_doc(Db),
     case kz_datamgr:get_results(Db, View, ViewOptions) of
         {'error', _R} ->
@@ -537,9 +554,11 @@ get_cdr_ids(Db, View, ViewOptions) ->
             {'ok', []};
         {'ok', JObjs} ->
             lager:debug("fetched cdr ids from ~s", [Db]),
-            {'ok', [{wh_doc:id(JObj), wh_json:get_value(<<"key">>, JObj)}
+            CDRs = [{wh_doc:id(JObj), wh_json:get_value(<<"key">>, JObj)}
                     || JObj <- JObjs
-                   ]}
+                   ],
+            lager:debug("started at ~p, used ~p", [StartMem, wh_util:mem_usage() - StartMem]),
+            {'ok', CDRs}
     end.
 
 -spec maybe_add_design_doc(ne_binary()) ->
@@ -557,17 +576,21 @@ maybe_add_design_doc(Db) ->
     end.
 
 -spec load_chunked_cdrs(ne_binary(), ne_binaries(), payload()) -> payload().
-load_chunked_cdrs(_, [], Payload) -> Payload;
+load_chunked_cdrs(_, [], Payload) ->
+    lager:debug("final load_chunked_cdrs mem: ~p", [wh_util:mem_usage()]),
+    Payload;
 load_chunked_cdrs(Db, Ids, {_, Context}=Payload) ->
     {BulkIds, Remaining} =
         case erlang:length(Ids) < ?MAX_BULK of
             'true' -> {Ids, []};
             'false' -> lists:split(?MAX_BULK, Ids)
         end,
+
     ViewOptions = [{'keys', BulkIds}
                    ,{'doc_type', <<"cdr">>}
                    ,'include_docs'
                   ],
+    StartMem = wh_util:mem_usage(),
     case kz_datamgr:all_docs(Db, ViewOptions) of
         {'ok', Results} ->
             HasQSFilter = crossbar_doc:has_qs_filter(Context),
@@ -575,7 +598,15 @@ load_chunked_cdrs(Db, Ids, {_, Context}=Payload) ->
                      || Result <- Results,
                         crossbar_doc:filtered_doc_by_qs(Result, HasQSFilter, Context)
                     ],
+            LoadedMem = wh_util:mem_usage(),
             P = normalize_and_send(JObjs, Payload),
+            SentMem = wh_util:mem_usage(),
+            lager:debug("loaded started at ~p, loaded ~p (~p) and sent ~p (~p)"
+                       ,[StartMem
+                        ,LoadedMem, LoadedMem - StartMem
+                        ,SentMem, SentMem - StartMem
+                        ]
+                       ),
             load_chunked_cdrs(Db, Remaining, P);
         {'error', _E} ->
             load_chunked_cdrs(Db, Remaining, Payload)
@@ -591,15 +622,29 @@ normalize_and_send(JObjs, {_, Context}=Payload) ->
 
 normalize_and_send('json', [], Payload) -> Payload;
 normalize_and_send('json', [JObj|JObjs], {Req, Context}) ->
+    StartMem = wh_util:mem_usage(),
     CDR = normalize_cdr(JObj, Context),
-    case cb_context:fetch(Context, 'started_chunk') of
-        'true' ->
-            'ok' = cowboy_req:chunk(<<",", (wh_json:encode(CDR))/binary>>, Req),
-            normalize_and_send('json', JObjs, {Req, Context});
-        _Else ->
-            'ok' = cowboy_req:chunk(wh_json:encode(CDR), Req),
-            normalize_and_send('json', JObjs, {Req, cb_context:store(Context, 'started_chunk', 'true')})
-    end;
+    NormMem = wh_util:mem_usage(),
+
+    Context1 = case cb_context:fetch(Context, 'started_chunk', 'false') of
+                   'false' -> Context;
+                   'true' ->
+                       'ok' = cowboy_req:chunk(<<",">>, Req),
+                       cb_context:store(Context, 'started_chunk', 'true')
+               end,
+
+    cowboy_req:chunk(wh_json:encode(CDR), Req),
+
+    ChunkedMem = wh_util:mem_usage(),
+    lager:debug("norm started at ~p, norm ~p (~p), chunked ~p (~p)"
+               ,[StartMem
+                ,NormMem, NormMem - StartMem
+                ,ChunkedMem, ChunkedMem - StartMem
+                ]),
+    (ChunkedMem - StartMem) > 0
+        andalso begin erlang:garbage_collect(), lager:debug("gc'd") end,
+
+    normalize_and_send('json', JObjs, {Req, Context1});
 normalize_and_send('csv', [], Payload) -> Payload;
 normalize_and_send('csv', [JObj|JObjs], {Req, Context}) ->
     case cb_context:fetch(Context, 'started_chunk') of
