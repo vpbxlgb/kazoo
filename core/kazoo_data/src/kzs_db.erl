@@ -19,6 +19,7 @@
          ,db_info/2
          ,db_exists/2
          ,db_archive/3
+         ,db_import/3
          ,db_list/2
         ]).
 
@@ -109,6 +110,13 @@ db_exists_all(DbName, Others) ->
 db_archive(#{server := {App, Conn}}=Server, DbName, Filename) ->
     case db_exists(Server, DbName) of
         'true' -> App:db_archive(Conn, DbName, Filename);
+        'false' -> 'ok'
+    end.
+
+-spec db_import(map(), ne_binary(), ne_binary()) -> boolean().
+db_import(#{server := {App, Conn}}=Server, DbName, Filename) ->
+    case db_exists(Server, DbName) of
+        'true' -> App:db_import(Conn, DbName, Filename);
         'false' -> 'ok'
     end.
 
