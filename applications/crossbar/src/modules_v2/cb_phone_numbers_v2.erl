@@ -603,10 +603,10 @@ get_prefix(City) ->
     case kapps_config:get_string(?PHONE_NUMBERS_CONFIG_CAT, ?KEY_PHONEBOOK_FREE_URL) of
         'undefined' ->
             {'error', <<"Unable to acquire numbers missing carrier url">>};
-        Url ->
+        URL ->
             Country = kapps_config:get_string(?PHONE_NUMBERS_CONFIG_CAT, <<"default_country">>, ?DEFAULT_COUNTRY),
-            ReqParam = kz_util:uri_encode(City),
-            case kz_http:get(lists:flatten([Url, "/", Country, "/city?pattern=", ReqParam])) of
+            URI = lists:flatten([URL, $/, Country, $/, "city?pattern=", kz_http_util:urlencode(City)]),
+            case kz_http:get(URI) of
                 {'ok', 200, _Headers, Body} ->
                     JObj = kz_json:decode(Body),
                     case kz_json:get_value(<<"data">>, JObj) of
