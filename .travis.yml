@@ -31,15 +31,14 @@ before_install:
   - if [[ ! -d $HOME/proper/.git/ ]]; then git clone --depth=50 --branch=master https://github.com/manopapad/proper.git $HOME/proper && cd $HOME/proper && make fast; fi
   - cd $TRAVIS_BUILD_DIR
 
-script:
-  - make
-  - ./scripts/validate-js.sh $(find applications/ core/ -name '*.json')
-  - make sup_completion
-  - make elvis
-  - make fmt
+script: make
 
 after_success:
+  - make fmt
   - if [[ 0 -ne `git status --porcelain -- applications/ core/ | wc -l` ]]; then echo Unstaged changes! && git diff && exit 1; fi
+  - ./scripts/validate-js.sh $(find applications/ core/ -name '*.json')
+  - make elvis
+  - make sup_completion
   - make xref
   - git fetch origin master:master
   - files="$(git diff --name-only master... -- application/ core/)" || true && echo $files
