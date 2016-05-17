@@ -58,9 +58,9 @@ find_numbers_in_account(Number, Quantity, AccountId) ->
                                         {'ok', knm_number:knm_numbers()}.
 do_find_numbers_in_account(Number, Quantity, AccountId) ->
     ViewOptions = [{'startkey', [AccountId, ?NUMBER_STATE_AVAILABLE, Number]}
-                   ,{'endkey', [AccountId, ?NUMBER_STATE_AVAILABLE, <<Number/binary, "\ufff0">>]}
-                   ,{'limit', Quantity}
-                   ,'include_docs'
+		  ,{'endkey', [AccountId, ?NUMBER_STATE_AVAILABLE, <<Number/binary, "\ufff0">>]}
+		  ,{'limit', Quantity}
+		  ,'include_docs'
                   ],
     case kz_datamgr:get_results(?KZ_MANAGED, <<"numbers/status">>, ViewOptions) of
         {'ok', []} ->
@@ -83,8 +83,8 @@ format_numbers_resp(JObjs) ->
 format_number_resp(JObj) ->
     Doc = kz_json:get_value(<<"doc">>, JObj),
     Updates = [{fun knm_phone_number:set_number/2, kz_doc:id(Doc)}
-               ,{fun knm_phone_number:set_carrier_data/2, Doc}
-               ,{fun knm_phone_number:set_module_name/2, ?CARRIER_MANAGED}
+	      ,{fun knm_phone_number:set_carrier_data/2, Doc}
+	      ,{fun knm_phone_number:set_module_name/2, ?CARRIER_MANAGED}
               ],
     {'ok', PhoneNumber} =
         knm_phone_number:setters(knm_phone_number:new(), Updates),
@@ -108,7 +108,7 @@ acquire_number(Number) ->
     State = knm_phone_number:state(PhoneNumber),
     lager:debug("acquiring number ~s in managed provider", [Num]),
     update_doc(Number, [{?PVT_STATE, State}
-                        ,{<<"pvt_assigned_to">>, AssignTo}
+		       ,{<<"pvt_assigned_to">>, AssignTo}
                        ]).
 
 %%--------------------------------------------------------------------
@@ -123,7 +123,7 @@ disconnect_number(Number) ->
     Num = knm_phone_number:number(knm_number:phone_number(Number)),
     lager:debug("disconnect number ~s in managed provider", [Num]),
     update_doc(Number, [{?PVT_STATE, ?NUMBER_STATE_RELEASED}
-                        ,{<<"pvt_assigned_to">>,<<>>}
+		       ,{<<"pvt_assigned_to">>,<<>>}
                        ]).
 
 -spec generate_numbers(ne_binary(), pos_integer(), non_neg_integer()) -> 'ok'.
@@ -150,7 +150,7 @@ import_numbers(AccountId, [Number | Numbers], JObj) ->
                       kz_json:set_value([<<"success">>, Number], kz_json:new(), JObj);
                   {'error', Reason} ->
                       Error = kz_json:from_list([{<<"reason">>, Reason}
-                                                 ,{<<"message">>, <<"error adding number to couchdb">>}
+						,{<<"message">>, <<"error adding number to couchdb">>}
                                                 ]),
                       kz_json:set_value([<<"errors">>, Number], Error, JObj)
               end,
@@ -161,9 +161,9 @@ import_numbers(AccountId, [Number | Numbers], JObj) ->
                       {'error', any()}.
 save_doc(AccountId, Number) ->
     JObj = kz_json:from_list([{<<"_id">>,<<"+",(kz_util:to_binary(Number))/binary>>}
-                              ,{<<"pvt_account_id">>, AccountId}
-                              ,{?PVT_STATE, ?NUMBER_STATE_AVAILABLE}
-                              ,{<<"pvt_type">>, <<"number">>}
+			     ,{<<"pvt_account_id">>, AccountId}
+			     ,{?PVT_STATE, ?NUMBER_STATE_AVAILABLE}
+			     ,{<<"pvt_type">>, <<"number">>}
                              ]),
     save_doc(JObj).
 
@@ -185,7 +185,7 @@ update_doc(Number, UpdateProps) ->
         {'ok', UpdatedDoc} ->
             knm_number:set_phone_number(
               Number
-              ,knm_phone_number:from_json(UpdatedDoc)
+				       ,knm_phone_number:from_json(UpdatedDoc)
              )
     end.
 

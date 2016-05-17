@@ -16,7 +16,7 @@ urldecode_test()->
     ?assertEqual(<<"abcd">>, kz_http_util:urldecode(<<"%61%62%63%64">>)).
 
 parse_query_string_test() ->
-        ?assertEqual(
+    ?assertEqual(
        [{<<"foo">>, <<"bar">>}, {<<"baz">>, <<"wibble \r\n">>}, {<<"z">>, <<"1">>}],
        kz_http_util:parse_query_string(<<"foo=bar&baz=wibble+%0D%0a&z=1">>)),
     ?assertEqual(
@@ -44,7 +44,7 @@ urlunsplit_test() ->
 
 urlencode_test() ->
     ?assertEqual(<<"1">> , kz_http_util:urlencode(1)),
-    %?assertEqual(<<"1.1">> , kz_http_util:urlencode(1.1)),
+						%?assertEqual(<<"1.1">> , kz_http_util:urlencode(1.1)),
     ?assertEqual(<<"1">> , kz_http_util:urlencode(<<"1">>)),
     ?assertEqual(<<"1.1">> , kz_http_util:urlencode(<<"1.1">>)),
     ?assertEqual(<<"foo">> , kz_http_util:urlencode(<<"foo">>)),

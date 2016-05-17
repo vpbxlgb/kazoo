@@ -34,12 +34,12 @@ handle_req(ApiJObj, _Props) ->
             RespQ = kz_json:get_value(<<"Server-ID">>, ApiJObj),
 
             lager:debug("sending reply for ~s.~s(~s): ~p"
-                        ,[Category, Key, Node, Value]
+		       ,[Category, Key, Node, Value]
                        ),
             Resp = [{<<"Category">>, Category}
-                    ,{<<"Key">>, Key}
-                    ,{<<"Value">>, Value}
-                    ,{<<"Msg-ID">>, kz_json:get_value(<<"Msg-ID">>, ApiJObj)}
+		   ,{<<"Key">>, Key}
+		   ,{<<"Value">>, Value}
+		   ,{<<"Msg-ID">>, kz_json:get_value(<<"Msg-ID">>, ApiJObj)}
                     | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
                    ],
             kapi_sysconf:publish_get_resp(RespQ, Resp)

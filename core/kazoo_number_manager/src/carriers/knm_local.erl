@@ -62,10 +62,10 @@ acquire_number(Number) ->
 disconnect_number(Number) ->
     knm_number:set_phone_number(
       Number
-      ,knm_phone_number:set_state(
-         knm_number:phone_number(Number)
-         ,knm_config:released_state()
-        )
+			       ,knm_phone_number:set_state(
+				  knm_number:phone_number(Number)
+							  ,knm_config:released_state()
+				 )
      ).
 
 %%--------------------------------------------------------------------

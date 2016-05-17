@@ -11,28 +11,28 @@
 -include("kzl.hrl").
 
 -export([
-    new/0
-    ,save/1
-]).
+	 new/0
+	,save/1
+	]).
 
 -export([
-    type/1, set_type/2
-    ,amount/1, set_amount/2
-    ,description/1, set_description/2
-    ,source/1
-    ,source_service/1, set_source_service/2
-    ,source_id/1, set_source_id/2
-    ,usage/1
-    ,usage_type/1, set_usage_type/2
-    ,usage_quantity/1, set_usage_quantity/2
-    ,usage_unit/1, set_usage_unit/2
-    ,period/1
-    ,period_start/1, set_period_start/2
-    ,period_end/1, set_period_end/2
-    ,account/1
-    ,account_id/1, set_account_id/2
-    ,account_name/1, set_account_name/2
-]).
+	 type/1, set_type/2
+	,amount/1, set_amount/2
+	,description/1, set_description/2
+	,source/1
+	,source_service/1, set_source_service/2
+	,source_id/1, set_source_id/2
+	,usage/1
+	,usage_type/1, set_usage_type/2
+	,usage_quantity/1, set_usage_quantity/2
+	,usage_unit/1, set_usage_unit/2
+	,period/1
+	,period_start/1, set_period_start/2
+	,period_end/1, set_period_end/2
+	,account/1
+	,account_id/1, set_account_id/2
+	,account_name/1, set_account_name/2
+	]).
 
 
 %%--------------------------------------------------------------------
@@ -58,10 +58,10 @@ save(Ledger) ->
     IsReseller = kz_services:is_reseller(AccountId),
     JObj =
         kz_json:set_values([
-            {<<"pvt_type">>, ?PVT_TYPE}
-            ,{<<"pvt_modified">>, kz_util:current_tstamp()}
-            ,{<<"pvt_created">>, kz_util:current_tstamp()}
-        ], Ledger),
+			    {<<"pvt_type">>, ?PVT_TYPE}
+			   ,{<<"pvt_modified">>, kz_util:current_tstamp()}
+			   ,{<<"pvt_created">>, kz_util:current_tstamp()}
+			   ], Ledger),
     save(JObj, AccountId, IsReseller).
 
 save(JObj, AccountId, 'true') ->

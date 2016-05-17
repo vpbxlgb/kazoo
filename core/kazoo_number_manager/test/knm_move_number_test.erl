@@ -22,7 +22,7 @@ move_to_child(Tests) ->
     PhoneNumber = knm_number:phone_number(Number),
 
     [{"verify assigned_to is child account"
-      ,?_assertEqual(?CHILD_ACCOUNT_ID, knm_phone_number:assigned_to(PhoneNumber))
+     ,?_assertEqual(?CHILD_ACCOUNT_ID, knm_phone_number:assigned_to(PhoneNumber))
      }
      | Tests
     ].

@@ -24,7 +24,7 @@ put_attachment(Params, DbName, DocId, AName, Contents, Options) ->
     #{url := BaseUrl, verb := Verb} = Params,
     {'ok', JObj} = kz_datamgr:open_cache_doc(DbName, DocId, Options),
     Args = [{<<"attachment">>, AName}
-            ,{<<"id">>, DocId}
+	   ,{<<"id">>, DocId}
            ],
     Fields = maps:get(field_list, Params, default_format()),
     DocUrlField = maps:get(document_url_field, Params, 'undefined'),
@@ -58,7 +58,7 @@ format_url(Fields, JObj, Args) ->
     kz_util:join_binary(
       lists:reverse(
         lists:foldl(fun(F, Acc) -> format_url_field(JObj, Args, F, Acc) end, [], Fields)
-        ), <<"/">>).
+       ), <<"/">>).
 
 format_url_field(_JObj, Args, <<":", Arg/binary>>, Fields) ->
     case props:get_value(Arg, Args) of

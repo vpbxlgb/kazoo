@@ -13,17 +13,17 @@
 -module(cb_vmboxes_v2).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1, allowed_methods/2, allowed_methods/3, allowed_methods/4
-         ,resource_exists/0, resource_exists/1, resource_exists/2, resource_exists/3, resource_exists/4
-         ,validate/1, validate/2, validate/3, validate/4, validate/5
-         ,content_types_provided/5
-         ,put/1
-         ,post/2, post/4
-         ,patch/2
-         ,delete/2, delete/3, delete/4
+	,allowed_methods/0, allowed_methods/1, allowed_methods/2, allowed_methods/3, allowed_methods/4
+	,resource_exists/0, resource_exists/1, resource_exists/2, resource_exists/3, resource_exists/4
+	,validate/1, validate/2, validate/3, validate/4, validate/5
+	,content_types_provided/5
+	,put/1
+	,post/2, post/4
+	,patch/2
+	,delete/2, delete/3, delete/4
 
-         ,migrate/1
-         ,acceptable_content_types/0
+	,migrate/1
+	,acceptable_content_types/0
         ]).
 
 -include("crossbar.hrl").
@@ -268,9 +268,9 @@ validate_messages(Context, DocId, ?HTTP_DELETE) ->
     Deleted = delete_messages(Messages, Filter),
 
     cb_context:set_resp_data(
-        cb_context:set_resp_status(Context, 'success')
-        ,Deleted
-    ).
+      cb_context:set_resp_status(Context, 'success')
+			    ,Deleted
+     ).
 
 
 %%--------------------------------------------------------------------
@@ -304,11 +304,11 @@ delete_messages([Mess|Messages], Filter, Deleted) ->
 -spec validate_request(api_binary(), cb_context:context()) -> cb_context:context().
 validate_request(VMBoxId, Context) ->
     ValidateFuns = [fun validate_unique_vmbox/2
-                    ,fun check_vmbox_schema/2
+		   ,fun check_vmbox_schema/2
                    ],
     lists:foldl(fun(F, C) -> F(VMBoxId, C) end
-                ,Context
-                ,ValidateFuns
+	       ,Context
+	       ,ValidateFuns
                ).
 
 %%--------------------------------------------------------------------
@@ -330,9 +330,9 @@ validate_unique_vmbox(VMBoxId, Context, _AccountDb) ->
         'false' ->
             cb_context:add_validation_error(
               <<"mailbox">>
-              ,<<"unique">>
-              ,kz_json:from_list([{<<"message">>, <<"Invalid mailbox number or already exists">>}])
-              ,Context
+					   ,<<"unique">>
+					   ,kz_json:from_list([{<<"message">>, <<"Invalid mailbox number or already exists">>}])
+					   ,Context
              )
     end.
 
@@ -360,12 +360,12 @@ maybe_migrate_notification_emails(Context) ->
     case maybe_migrate_vm_box(ReqData) of
         {'true', ReqData1} ->
             cb_context:setters(Context
-                               ,[{fun cb_context:set_req_data/2, ReqData1}
-                                 ,{fun cb_context:add_resp_header/3
-                                   ,<<"Warning">>
-                                   ,<<"214 Transformation applied: attribute notify_email_address replaced">>
-                                  }
-                                ]
+			      ,[{fun cb_context:set_req_data/2, ReqData1}
+			       ,{fun cb_context:add_resp_header/3
+				,<<"Warning">>
+				,<<"214 Transformation applied: attribute notify_email_address replaced">>
+				}
+			       ]
                               );
         'false' -> Context
     end.
@@ -380,7 +380,7 @@ maybe_migrate_notification_emails(Context) ->
                                       cb_context:context().
 on_successful_validation('undefined', Context) ->
     Props = [{<<"pvt_type">>, kzd_voicemail_box:type()}
-             ,{?VM_KEY_MESSAGES, []}
+	    ,{?VM_KEY_MESSAGES, []}
             ],
     cb_context:set_doc(Context, kz_json:set_values(Props, cb_context:doc(Context)));
 on_successful_validation(VMBoxId, Context) ->
@@ -458,24 +458,24 @@ load_message(MediaId, UpdateJObj, Context) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec load_message_metadata(kz_json:object(), kz_json:object(), cb_context:context()) ->
-                                        {boolean(), cb_context:context()}.
+				   {boolean(), cb_context:context()}.
 load_message_metadata(Message, UpdateJObj, Context) ->
     CurrentMetaData = kzd_box_message:metadata(Message, kz_json:new()),
     CurrentFolder = kzd_box_message:folder(CurrentMetaData, ?VM_FOLDER_NEW),
 
     RequestedFolder = cb_context:req_value(Context
-                                           ,?VM_KEY_FOLDER
-                                           ,kzd_box_message:folder(UpdateJObj, CurrentFolder)
+					  ,?VM_KEY_FOLDER
+					  ,kzd_box_message:folder(UpdateJObj, CurrentFolder)
                                           ),
     lager:debug("ensuring message is in folder ~s", [RequestedFolder]),
     MetaData = kz_json:merge_jobjs(kzd_box_message:set_folder(RequestedFolder, UpdateJObj)
-                                   ,CurrentMetaData
+				  ,CurrentMetaData
                                   ),
     {CurrentFolder =/= RequestedFolder
-     ,cb_context:set_resp_data(
-        cb_context:set_doc(Context, kzd_box_message:set_metadata(MetaData, Message))
-        ,MetaData
-       )}.
+    ,cb_context:set_resp_data(
+       cb_context:set_doc(Context, kzd_box_message:set_metadata(MetaData, Message))
+			     ,MetaData
+      )}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -507,16 +507,16 @@ load_message_binary(DocId, MediaId, Context) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec load_attachment_from_message(ne_binary(), cb_context:context(), boolean(), ne_binary()) ->
-                                              {boolean(), cb_context:context()}.
+					  {boolean(), cb_context:context()}.
 load_attachment_from_message(MediaId, Context, Update, Timezone) ->
     Doc = cb_context:doc(Context),
     VMMetaJObj = kzd_box_message:metadata(Doc),
 
     [AttachmentId] = kz_doc:attachment_names(Doc),
     Filename = generate_media_name(kz_json:get_value(<<"caller_id_number">>, VMMetaJObj)
-                                   ,kz_json:get_value(<<"timestamp">>, VMMetaJObj)
-                                   ,filename:extension(AttachmentId)
-                                   ,Timezone
+				  ,kz_json:get_value(<<"timestamp">>, VMMetaJObj)
+				  ,filename:extension(AttachmentId)
+				  ,Timezone
                                   ),
     case kz_datamgr:fetch_attachment(kz_doc:account_db(Doc), MediaId, AttachmentId) of
         {'error', Error} ->
@@ -524,13 +524,13 @@ load_attachment_from_message(MediaId, Context, Update, Timezone) ->
         {'ok', AttachBin} ->
             lager:debug("Sending file with filename ~s", [Filename]),
             Setters = [{fun cb_context:set_resp_data/2, AttachBin}
-                       ,{fun cb_context:set_resp_etag/2, 'undefined'}
-                       ,{fun cb_context:add_resp_headers/2
-                         ,[{<<"Content-Type">>, kz_doc:attachment_content_type(Doc, AttachmentId)}
-                           ,{<<"Content-Disposition">>, <<"attachment; filename=", Filename/binary>>}
-                           ,{<<"Content-Length">>, kz_doc:attachment_length(Doc, AttachmentId)}
-                          ]
-                        }
+		      ,{fun cb_context:set_resp_etag/2, 'undefined'}
+		      ,{fun cb_context:add_resp_headers/2
+		       ,[{<<"Content-Type">>, kz_doc:attachment_content_type(Doc, AttachmentId)}
+			,{<<"Content-Disposition">>, <<"attachment; filename=", Filename/binary>>}
+			,{<<"Content-Length">>, kz_doc:attachment_length(Doc, AttachmentId)}
+			]
+		       }
                       ],
             {Update, cb_context:setters(Context, Setters)}
     end.
@@ -590,7 +590,7 @@ check_uniqueness(VMBoxId, Context, Mailbox) ->
     case kz_datamgr:get_results(cb_context:account_db(Context)
                                ,<<"vmboxes/listing_by_mailbox">>
                                ,ViewOptions
-                              )
+			       )
     of
         {'ok', []} -> 'true';
         {'ok', [VMBox]} ->
@@ -667,8 +667,8 @@ maybe_migrate_boxes(AccountDb, Boxes) ->
                                 {'true', Box1} -> [Box1 | Acc]
                             end
                     end
-                    ,[]
-                    ,Boxes
+		   ,[]
+		   ,Boxes
                    ),
     io:format("migrating ~p out of ~p boxes~n", [length(ToUpdate), length(Boxes)]),
     maybe_update_boxes(AccountDb, ToUpdate).

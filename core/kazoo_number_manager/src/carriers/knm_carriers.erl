@@ -12,18 +12,18 @@
 -include("knm.hrl").
 
 -export([find/1, find/2, find/3
-         ,check/1, check/2
-         ,available_carriers/0, available_carriers/1
-         ,default_carriers/0, default_carrier/0
-         ,acquire/1
-         ,disconnect/1
+	,check/1, check/2
+	,available_carriers/0, available_carriers/1
+	,default_carriers/0, default_carrier/0
+	,acquire/1
+	,disconnect/1
         ]).
 
 -define(DEFAULT_CARRIER_MODULES, [?CARRIER_LOCAL]).
 
 -ifdef(TEST).
 -export([process_carrier_results/2
-         ,process_bulk_carrier_results/2
+	,process_bulk_carrier_results/2
         ]).
 
 -define(DEFAULT_CARRIER_MODULE, ?CARRIER_LOCAL).
@@ -34,9 +34,9 @@
         (fun () ->
                  case
                      kapps_config:get_binary(?KNM_CONFIG_CAT
-                                              ,<<"available_module_name">>
-                                              ,?CARRIER_LOCAL
-                                             )
+					    ,<<"available_module_name">>
+					    ,?CARRIER_LOCAL
+					    )
                  of
                      ?CARRIER_LOCAL_LEGACY -> ?CARRIER_LOCAL;
                      M -> M
@@ -46,9 +46,9 @@
 -define(CARRIER_MODULES,
         (fun () ->
                  Ms = kapps_config:get(?KNM_CONFIG_CAT
-                                        ,<<"carrier_modules">>
-                                        ,?DEFAULT_CARRIER_MODULES
-                                       ),
+				      ,<<"carrier_modules">>
+				      ,?DEFAULT_CARRIER_MODULES
+				      ),
                  case lists:member(?CARRIER_LOCAL_LEGACY, Ms) of
                      'false' -> Ms;
                      'true' -> (Ms -- [?CARRIER_LOCAL_LEGACY]) ++ [?CARRIER_LOCAL]
@@ -77,8 +77,8 @@ find(Num, Quantity, Options) ->
     lists:foldl(fun(Carrier, Acc) ->
                         find_fold(Carrier, Acc, NormalizedNumber, Quantity, Options)
                 end
-                ,[]
-                ,available_carriers(Options)
+	       ,[]
+	       ,available_carriers(Options)
                ).
 
 -spec find_fold(atom(), kz_json:objects(), ne_binary(), non_neg_integer(), kz_proplist()) ->
@@ -92,7 +92,7 @@ find_fold(Carrier, Acc, NormalizedNumber, Quantity, Options) ->
         _E:_R ->
             ST = erlang:get_stacktrace(),
             ?LOG_WARN("failed to query carrier ~s for ~p numbers: ~s: ~p"
-                      ,[Carrier, Quantity, _E, _R]
+		     ,[Carrier, Quantity, _E, _R]
                      ),
             log_stacktrace(ST),
             Acc
@@ -134,7 +134,7 @@ check_for_existing_did(Number, Acc, Carrier, {'ok', ExistingPhoneNumber}) ->
         _OtherCarrier ->
             create_discovery(
               transition_existing_to_discovery(Number, ExistingPhoneNumber, Carrier)
-              ,Acc
+			    ,Acc
              )
     end.
 
@@ -165,10 +165,10 @@ transition_existing_to_discovery(Number, ExistingPhoneNumber, Carrier) ->
     {'ok', PhoneNumber} =
         knm_phone_number:setters(
           ExistingPhoneNumber
-          ,[{fun knm_phone_number:set_module_name/2, knm_phone_number:module_name(PhoneNumber0)}
-            ,{fun knm_phone_number:set_carrier_data/2, knm_phone_number:carrier_data(PhoneNumber0)}
-            ,{fun knm_phone_number:set_module_name/2, Carrier}
-           ]
+				,[{fun knm_phone_number:set_module_name/2, knm_phone_number:module_name(PhoneNumber0)}
+				 ,{fun knm_phone_number:set_carrier_data/2, knm_phone_number:carrier_data(PhoneNumber0)}
+				 ,{fun knm_phone_number:set_module_name/2, Carrier}
+				 ]
          ),
     knm_number:set_phone_number(Number, PhoneNumber).
 
@@ -195,10 +195,10 @@ found_number_to_jobj(PhoneNumber, ?CARRIER_MANAGED) ->
     CarrierData = knm_phone_number:carrier_data(PhoneNumber),
     kz_json:from_list(
       props:filter_undefined(
-              [{<<"number">>, knm_phone_number:number(PhoneNumber)}
-               ,{<<"rate">>, kz_json:get_value(<<"rate">>, CarrierData, <<"1">>)}
-               ,{<<"activation_charge">>, kz_json:get_value(<<"activation_charge">>, CarrierData, <<"0">>)}
-              ])
+	[{<<"number">>, knm_phone_number:number(PhoneNumber)}
+	,{<<"rate">>, kz_json:get_value(<<"rate">>, CarrierData, <<"1">>)}
+	,{<<"activation_charge">>, kz_json:get_value(<<"activation_charge">>, CarrierData, <<"0">>)}
+	])
      );
 found_number_to_jobj(PhoneNumber, _Carrier) ->
     DID = knm_phone_number:number(PhoneNumber),
@@ -208,10 +208,10 @@ found_number_to_jobj(PhoneNumber, _Carrier) ->
     kz_json:set_values(
       props:filter_undefined(
         [{<<"number">>, DID}
-         ,{<<"activation_charge">>, activation_charge(DID, AssignTo)}
+	,{<<"activation_charge">>, activation_charge(DID, AssignTo)}
         ]
        )
-      ,CarrierData
+		      ,CarrierData
      ).
 
 -spec activation_charge(ne_binary(), api_binary()) -> api_number().
@@ -223,8 +223,8 @@ activation_charge(_Number, _AccountId) -> 1.0.
 activation_charge(_DID, 'undefined') -> 'undefined';
 activation_charge(DID, AccountId) ->
     kz_services:activation_charges(<<"phone_numbers">>
-                                   ,knm_converters:classify(DID)
-                                   ,AccountId
+				  ,knm_converters:classify(DID)
+				  ,AccountId
                                   ).
 -endif.
 
@@ -358,7 +358,7 @@ log_stacktrace(ST) ->
 
 log_stacktrace_mfa(M, F, Arity, Info) when is_integer(Arity) ->
     ?LOG_DEBUG("st: ~s:~s/~b at (~b)"
-               ,[M, F, Arity, props:get_value('line', Info, 0)]
+	      ,[M, F, Arity, props:get_value('line', Info, 0)]
               );
 log_stacktrace_mfa(M, F, Args, Info) ->
     ?LOG_DEBUG("st: ~s:~s at ~p", [M, F, props:get_value('line', Info, 0)]),

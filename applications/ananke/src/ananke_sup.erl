@@ -72,5 +72,5 @@ init([]) ->
 -spec get_amqp_cron_nodes() -> atoms().
 get_amqp_cron_nodes() ->
     lists:map(fun(X) -> kz_util:to_atom(kz_util:to_list(X), 'true') end
-              ,kapps_config:get(?CONFIG_CAT, <<"nodes">>, [node()])
-              ) -- [node()].
+	     ,kapps_config:get(?CONFIG_CAT, <<"nodes">>, [node()])
+	     ) -- [node()].

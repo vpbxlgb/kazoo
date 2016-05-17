@@ -83,7 +83,7 @@ insert_decimal(0, S) ->
 insert_decimal(Place, S) when Place > 0 ->
     L = length(S),
     case Place - L of
-         0 ->
+	0 ->
             S ++ ".0";
         N when N < 0 ->
             {S0, S1} = lists:split(L + N, S),
@@ -346,8 +346,8 @@ frexp_test() ->
     %% 1.79769313486231570815e+308
     <<LargeNorm/float>> = <<127,239,255,255,255,255,255,255>>,
     ?assertEqual(
-        {0.99999999999999989, 1024},
-        frexp(LargeNorm)),
+       {0.99999999999999989, 1024},
+       frexp(LargeNorm)),
     %% issue #10 - mochinum:frexp(math:pow(2, -1074)).
     ?assertEqual(
        {0.5, -1073},

@@ -10,9 +10,9 @@
 -behaviour(supervisor).
 
 -export([start_link/0
-         ,initialize_kapps/1
-         ,init/1
-         ,start_child/1
+	,initialize_kapps/1
+	,init/1
+	,start_child/1
         ]).
 
 -include("kapps_call_command.hrl").
@@ -21,9 +21,9 @@
 -define(SERVER, ?MODULE).
 
 -define(CHILDREN, [?SUPER('kz_hooks_listener_sup')
-                   ,?WORKER('kz_nodes')
-                   ,?WORKER('kazoo_apps_init')
-                   ,?WORKER('kapps_controller')
+		  ,?WORKER('kz_nodes')
+		  ,?WORKER('kazoo_apps_init')
+		  ,?WORKER('kapps_controller')
                   ]).
 
 %% ===================================================================

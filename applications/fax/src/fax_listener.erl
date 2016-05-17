@@ -19,12 +19,12 @@
 
 %% gen_listener callbacks
 -export([init/1
-         ,handle_call/3
-         ,handle_cast/2
-         ,handle_info/2
-         ,handle_event/2
-         ,terminate/2
-         ,code_change/3
+	,handle_call/3
+	,handle_cast/2
+	,handle_info/2
+	,handle_event/2
+	,terminate/2
+	,code_change/3
         ]).
 
 
@@ -33,14 +33,14 @@
 -define(SERVER, ?MODULE).
 
 -define(BINDINGS, [{'xmpp', [{'restrict_to', ['start']}]}
-                   ,{'self', []}
+		  ,{'self', []}
                   ]).
 -define(RESPONDERS, [{{?MODULE, 'handle_printer_start'}
-                      ,[{<<"xmpp_event">>, <<"start">>}]
+		     ,[{<<"xmpp_event">>, <<"start">>}]
                      }
-                     ,{{?MODULE, 'handle_printer_stop'}
-                       ,[{<<"xmpp_event">>, <<"stop">>}]
-                      }
+		    ,{{?MODULE, 'handle_printer_stop'}
+		     ,[{<<"xmpp_event">>, <<"stop">>}]
+		     }
                     ]).
 
 -define(QUEUE_NAME, <<>>).
@@ -57,10 +57,10 @@
 -spec start_link() -> startlink_ret().
 start_link() ->
     gen_listener:start_link(?SERVER, [{'bindings', ?BINDINGS}
-                                      ,{'responders', ?RESPONDERS}
-                                      ,{'queue_name', ?QUEUE_NAME}       % optional to include
-                                      ,{'queue_options', ?QUEUE_OPTIONS} % optional to include
-                                      ,{'consume_options', ?CONSUME_OPTIONS} % optional to include
+				     ,{'responders', ?RESPONDERS}
+				     ,{'queue_name', ?QUEUE_NAME}       % optional to include
+				     ,{'queue_options', ?QUEUE_OPTIONS} % optional to include
+				     ,{'consume_options', ?CONSUME_OPTIONS} % optional to include
                                      ], []).
 
 -spec handle_printer_start(kz_json:object(), kz_proplist()) -> sup_startchild_ret().
@@ -178,23 +178,23 @@ code_change(_OldVsn, State, _Extra) ->
 start_all_printers() ->
     {'ok', Results} = kz_datamgr:get_results(?KZ_FAXES_DB, <<"faxbox/cloud">>),
     [ send_start_printer(Id, Jid)
-       || {Id, Jid, <<"claimed">>}
-              <- [{kz_doc:id(Result)
-                   ,kz_json:get_value([<<"value">>,<<"xmpp_jid">>], Result)
-                   ,kz_json:get_value([<<"value">>,<<"state">>], Result)
-                  }
-                  || Result <- Results
-                 ]
+      || {Id, Jid, <<"claimed">>}
+	     <- [{kz_doc:id(Result)
+		 ,kz_json:get_value([<<"value">>,<<"xmpp_jid">>], Result)
+		 ,kz_json:get_value([<<"value">>,<<"state">>], Result)
+		 }
+		 || Result <- Results
+		]
     ].
 
 -spec send_start_printer(ne_binary(), ne_binary()) -> any().
 send_start_printer(PrinterId, JID) ->
     Payload = props:filter_undefined(
                 [{<<"Event-Name">>, <<"start">>}
-                 ,{<<"Application-Name">>, <<"fax">>}
-                 ,{<<"Application-Event">>, <<"init">>}
-                 ,{<<"Application-Data">>, PrinterId}
-                 ,{<<"JID">>, JID}
+		,{<<"Application-Name">>, <<"fax">>}
+		,{<<"Application-Event">>, <<"init">>}
+		,{<<"Application-Data">>, PrinterId}
+		,{<<"JID">>, JID}
                  | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
                 ]),
     kz_amqp_worker:cast(Payload, fun kapi_xmpp:publish_event/1).

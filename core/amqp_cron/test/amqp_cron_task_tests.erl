@@ -122,50 +122,50 @@ extract_integers_test() ->
     ?assertEqual([5], extract_integers([5], 0, 10)).
 
 next_valid_datetime_cron_test() ->
-    % roll year
+						% roll year
     ?assertEqual({{2013, 1, 1}, {0, 0, 0}},
 		 next_valid_datetime({cron, {all, all, all, all, all}},
 				     {{2012, 12, 31}, {23, 59, 48}})),
-    % last second of minute (we skip a second)
+						% last second of minute (we skip a second)
     ?assertEqual({{2012, 1, 1}, {0, 1, 0}},
 		 next_valid_datetime({cron, {all, all, all, all, all}},
 				     {{2012, 1, 1}, {0, 0, 59}})),
-    % 12th month rolls year
-     ?assertEqual({{2013, 2, 1}, {0, 0, 0}},
+						% 12th month rolls year
+    ?assertEqual({{2013, 2, 1}, {0, 0, 0}},
 		 next_valid_datetime({cron, {all, all, all,
 					     [{list, [2]}], all}},
 				     {{2012, 12, 1}, {0, 0, 0}})),
-    % normal month advance
+						% normal month advance
     ?assertEqual({{2012, 12, 1}, {0, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, all, all, [{list, [12]}], all}},
 		   {{2012, 4, 1}, {0, 0, 0}})),
-    % day of month (no day of week)
+						% day of month (no day of week)
     ?assertEqual({{2012, 1, 13}, {0, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, all, [{list, [13]}], all, all}},
 		   {{2012, 1, 5}, {0, 0, 0}})),
-    % day of week (no day of month)
+						% day of week (no day of month)
     ?assertEqual({{2012, 2, 10}, {0, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, all, all, all, [{list, [5]}]}}, % 5 is Friday
 		   {{2012, 2, 7}, {0, 0, 0}})),
-    % day of week and day of month (day of month comes first and wins)
+						% day of week and day of month (day of month comes first and wins)
     ?assertEqual({{2012, 2, 8}, {0, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, all, [{list, [8]}], all, [{list, [5]}]}},
 		   {{2012, 2, 7}, {0, 0, 0}})),
-    % day of week and day of month (day of week comes first and wins)
+						% day of week and day of month (day of week comes first and wins)
     ?assertEqual({{2012, 2, 10}, {0, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, all, [{list, [12]}], all, [{list, [5]}]}},
 		   {{2012, 2, 7}, {0, 0, 0}})),
-    % hour advance
+						% hour advance
     ?assertEqual({{2012, 1, 1}, {22, 0, 0}},
 		 next_valid_datetime(
 		   {cron, {all, [{list, [22]}], all, all, all}},
 		   {{2012, 1, 1}, {0, 0, 0}})),
-    % minute advance
+						% minute advance
     ?assertEqual({{2012, 1, 1}, {0, 59, 0}},
 		 next_valid_datetime(
 		   {cron, {[{list, [59]}], all, all, all, all}},

@@ -3,9 +3,9 @@
 -export([test/1]).
 
 -define(DEFAULT_HEADERS, [<<"Server-ID">>, <<"Event-Category">>, <<"Event-Name">>
-			      , <<"App-Name">>, <<"App-Version">>, <<"Raw-Headers">>, <<"Destination-Server">>
-			      , <<"Geo-Location">>, <<"Access-Group">>
-			      , <<"Tenant-ID">>]).
+			 , <<"App-Name">>, <<"App-Version">>, <<"Raw-Headers">>, <<"Destination-Server">>
+			 , <<"Geo-Location">>, <<"Access-Group">>
+			 , <<"Tenant-ID">>]).
 
 test(Times) ->
     Props = [get_prop() || _ <- lists:seq(1, Times)],

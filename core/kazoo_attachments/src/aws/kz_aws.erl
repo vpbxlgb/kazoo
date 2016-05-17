@@ -152,18 +152,18 @@ aws_request4_no_update(Method, Protocol, Host, Port, Path, Params, Service, #aws
 
 
 -spec aws_request_form(Method :: atom(), Protocol :: undefined | string(), Host :: string(),
-                        Port :: undefined | integer() | string(), Path :: string(), Form :: iodata(),
-                        Headers :: list(), Config :: aws_config()) -> {ok, binary()} | {error, tuple()}.
+		       Port :: undefined | integer() | string(), Path :: string(), Form :: iodata(),
+		       Headers :: list(), Config :: aws_config()) -> {ok, binary()} | {error, tuple()}.
 aws_request_form(Method, Protocol, Host, Port, Path, Form, Headers, Config) ->
     UProtocol = case Protocol of
-        undefined -> "https://";
-        _ -> [Protocol, "://"]
-    end,
+		    undefined -> "https://";
+		    _ -> [Protocol, "://"]
+		end,
 
     URL = case Port of
-        undefined -> [UProtocol, Host, Path];
-        _ -> [UProtocol, Host, $:, port_to_str(Port), Path]
-    end,
+	      undefined -> [UProtocol, Host, Path];
+	      _ -> [UProtocol, Host, $:, port_to_str(Port), Path]
+	  end,
 
     %% Note: httpc MUST be used with {timeout, timeout()} option
     %%       Many timeout related failures is observed at prod env
@@ -469,10 +469,10 @@ authorization(Config, CredentialScope, SignedHeaders, Signature) ->
 -spec get_service_status(list(string())) -> ok | list().
 get_service_status(ServiceNames) when is_list(ServiceNames) ->
     {ok, Json} = aws_request_form(get, "http", "status.aws.amazon.com", undefined,
-        "/data.json", "", [], default_config()),
+				  "/data.json", "", [], default_config()),
 
     case get_filtered_statuses(ServiceNames,
-            proplists:get_value(<<"current">>, kz_json:decode(Json)))
+			       proplists:get_value(<<"current">>, kz_json:decode(Json)))
     of
         [] -> ok;
         ReturnStatuses -> ReturnStatuses
@@ -480,16 +480,16 @@ get_service_status(ServiceNames) when is_list(ServiceNames) ->
 
 get_filtered_statuses(ServiceNames, Statuses) ->
     lists:filter(
-        fun(S)->
-            lists:any(
+      fun(S)->
+	      lists:any(
                 fun(InputService)->
-                    ServiceNameBin = list_to_binary(InputService),
-                    ServiceNameLen = byte_size(ServiceNameBin),
-                    case proplists:get_value(<<"service">>, S) of
-                        <<ServiceNameBin:ServiceNameLen/binary, _/binary>> -> true;
-                        _ -> false
-                    end
+			ServiceNameBin = list_to_binary(InputService),
+			ServiceNameLen = byte_size(ServiceNameBin),
+			case proplists:get_value(<<"service">>, S) of
+			    <<ServiceNameBin:ServiceNameLen/binary, _/binary>> -> true;
+			    _ -> false
+			end
                 end,
                 ServiceNames)
-        end,
-        Statuses).
+      end,
+      Statuses).

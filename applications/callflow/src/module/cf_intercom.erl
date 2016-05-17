@@ -27,7 +27,7 @@ handle(Data, Call) ->
             JObj = case kz_json:is_true(<<"barge_calls">>, Data) of
                        'false' -> kz_json:from_list([{<<"Auto-Answer">>, <<"true">>}]);
                        'true' -> kz_json:from_list([{<<"Auto-Answer">>, <<"true">>}
-                                                    ,{<<"Auto-Answer-Notify">>, <<"true">>}
+						   ,{<<"Auto-Answer-Notify">>, <<"true">>}
                                                    ])
                    end,
             kapps_call_command:set('undefined', JObj, Call),

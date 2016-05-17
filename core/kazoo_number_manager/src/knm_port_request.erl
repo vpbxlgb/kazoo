@@ -9,18 +9,18 @@
 -module(knm_port_request).
 
 -export([init/0
-         ,current_state/1
-         ,public_fields/1
-         ,get/1
-         ,account_active_ports/1
-         ,account_has_active_port/1
-         ,normalize_attachments/1
-         ,normalize_numbers/1
-         ,transition_to_complete/1
-         ,maybe_transition/2
-         ,charge_for_port/1, charge_for_port/2
-         ,send_submitted_requests/0
-         ,migrate/0
+	,current_state/1
+	,public_fields/1
+	,get/1
+	,account_active_ports/1
+	,account_has_active_port/1
+	,normalize_attachments/1
+	,normalize_numbers/1
+	,transition_to_complete/1
+	,maybe_transition/2
+	,charge_for_port/1, charge_for_port/2
+	,send_submitted_requests/0
+	,migrate/0
         ]).
 
 -compile({'no_auto_import', [get/1]}).
@@ -63,13 +63,13 @@ public_fields(JObj) ->
     As = kz_doc:attachments(JObj, kz_json:new()),
 
     kz_json:set_values([{<<"id">>, kz_doc:id(JObj)}
-                        ,{<<"created">>, kz_doc:created(JObj)}
-                        ,{<<"updated">>, kz_doc:modified(JObj)}
-                        ,{<<"uploads">>, normalize_attachments(As)}
-                        ,{<<"port_state">>, kz_json:get_value(?PORT_PVT_STATE, JObj, ?PORT_WAITING)}
-                        ,{<<"sent">>, kz_json:get_value(?PVT_SENT, JObj, 'false')}
+		       ,{<<"created">>, kz_doc:created(JObj)}
+		       ,{<<"updated">>, kz_doc:modified(JObj)}
+		       ,{<<"uploads">>, normalize_attachments(As)}
+		       ,{<<"port_state">>, kz_json:get_value(?PORT_PVT_STATE, JObj, ?PORT_WAITING)}
+		       ,{<<"sent">>, kz_json:get_value(?PVT_SENT, JObj, 'false')}
                        ]
-                       ,kz_doc:public_fields(JObj)
+		      ,kz_doc:public_fields(JObj)
                       ).
 
 %%--------------------------------------------------------------------
@@ -85,8 +85,8 @@ get(DID) when is_binary(DID) ->
     case
         kz_datamgr:get_results(
           ?KZ_PORT_REQUESTS_DB
-          ,<<"port_requests/port_in_numbers">>
-          ,ViewOptions
+			      ,<<"port_requests/port_in_numbers">>
+			      ,ViewOptions
          )
     of
         {'ok', []} -> {'error', 'not_found'};
@@ -104,7 +104,7 @@ get(Number) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec account_active_ports(ne_binary()) -> {'ok', kz_json:object()} |
-                                             {'error', 'not_found'}.
+					   {'error', 'not_found'}.
 account_active_ports(AccountId) ->
     ViewOptions = [{'key', AccountId}, 'include_docs'],
     case kz_datamgr:get_results(?KZ_PORT_REQUESTS_DB, ?ACTIVE_PORT_LISTING, ViewOptions) of
@@ -252,7 +252,7 @@ send_submitted_requests() ->
     case kz_datamgr:get_results(?KZ_PORT_REQUESTS_DB
                                ,?VIEW_LISTING_SUBMITTED
                                ,['include_docs']
-                              )
+			       )
     of
         {'error', _R} ->
             lager:error("failed to open view ~s ~p", [?VIEW_LISTING_SUBMITTED, _R]);
@@ -365,7 +365,7 @@ maybe_send_request(JObj) ->
 
 maybe_send_request(JObj, 'undefined')->
     lager:debug("'submitted_port_requests_url' is not set for account ~s"
-                ,[kz_doc:account_id(JObj)]);
+	       ,[kz_doc:account_id(JObj)]);
 maybe_send_request(JObj, Url)->
     case send_request(JObj, Url) of
         'error' -> 'ok';
@@ -384,24 +384,24 @@ maybe_send_request(JObj, Url)->
 -spec send_request(kz_json:object(), ne_binary()) -> 'error' | 'ok'.
 send_request(JObj, Url) ->
     Headers = [{"Content-Type", "application/json"}
-               ,{"User-Agent", kz_util:to_list(erlang:node())}
+	      ,{"User-Agent", kz_util:to_list(erlang:node())}
               ],
 
     Uri = kz_util:to_list(<<Url/binary, "/", (kz_doc:id(JObj))/binary>>),
 
     Remove = [<<"_rev">>
-              ,<<"ui_metadata">>
-              ,<<"_attachments">>
-              ,<<"pvt_request_id">>
-              ,<<"pvt_type">>
-              ,<<"pvt_vsn">>
-              ,<<"pvt_account_db">>
+	     ,<<"ui_metadata">>
+	     ,<<"_attachments">>
+	     ,<<"pvt_request_id">>
+	     ,<<"pvt_type">>
+	     ,<<"pvt_vsn">>
+	     ,<<"pvt_account_db">>
              ],
     Replace = [{<<"_id">>, <<"id">>}
-               ,{<<"pvt_port_state">>, <<"port_state">>}
-               ,{<<"pvt_account_id">>, <<"account_id">>}
-               ,{<<"pvt_created">>, <<"created">>}
-               ,{<<"pvt_modified">>, <<"modified">>}
+	      ,{<<"pvt_port_state">>, <<"port_state">>}
+	      ,{<<"pvt_account_id">>, <<"account_id">>}
+	      ,{<<"pvt_created">>, <<"created">>}
+	      ,{<<"pvt_modified">>, <<"modified">>}
               ],
     Data = kz_json:encode(kz_json:normalize_jobj(JObj, Remove, Replace)),
 
@@ -446,8 +446,8 @@ fetch_and_send(Url, JObj) ->
                       send_attachment(Url, Id, Key, Value, Attachment)
               end
       end
-      ,'ok'
-      ,Attachments
+		 ,'ok'
+		 ,Attachments
      ).
 
 %%--------------------------------------------------------------------
@@ -456,12 +456,12 @@ fetch_and_send(Url, JObj) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec send_attachment(ne_binary(), ne_binary(), ne_binary(), kz_json:object(), binary()) ->
-                              'error' | 'ok'.
+			     'error' | 'ok'.
 send_attachment(Url, Id, Name, Options, Attachment) ->
     ContentType = kz_json:get_value(<<"content_type">>, Options),
 
     Headers = [{"Content-Type", kz_util:to_list(ContentType)}
-               ,{"User-Agent", kz_util:to_list(erlang:node())}
+	      ,{"User-Agent", kz_util:to_list(erlang:node())}
               ],
 
     Uri = kz_util:to_list(<<Url/binary, "/", Id/binary, "/", Name/binary>>),
@@ -519,7 +519,7 @@ migrate_docs(Docs) ->
 -spec prepare_docs_for_migrate(kz_json:objects()) -> kz_json:objects().
 prepare_docs_for_migrate(Docs) ->
     [UpdatedDoc || Doc <- Docs,
-            (UpdatedDoc = migrate_doc(kz_json:get_value(<<"doc">>, Doc))) =/= 'undefined'
+		   (UpdatedDoc = migrate_doc(kz_json:get_value(<<"doc">>, Doc))) =/= 'undefined'
     ].
 
 -spec migrate_doc(kz_json:object()) -> api_object().
@@ -544,7 +544,7 @@ update_doc(PortRequest, AccountId) ->
 -spec fetch_docs(binary(), pos_integer()) -> {'ok', kz_json:objects()}.
 fetch_docs(StartKey, Limit) ->
     ViewOptions = [{'startkey', StartKey}
-                   ,{'limit', Limit + 1}
-                   ,'include_docs'
+		  ,{'limit', Limit + 1}
+		  ,'include_docs'
                   ],
     kz_datamgr:all_docs(?KZ_PORT_REQUESTS_DB, ViewOptions).

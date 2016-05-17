@@ -9,14 +9,14 @@
 -module(kapi_fax).
 
 -export([req/1, req_v/1
-         ,query_status/1, query_status_v/1
-         ,status/1, status_v/1
-         ,bind_q/2, unbind_q/2
-         ,declare_exchanges/0
-         ,publish_req/1, publish_req/2
-         ,publish_query_status/2, publish_query_status/3
-         ,publish_status/1, publish_status/2
-         ,publish_targeted_status/2, publish_targeted_status/3
+	,query_status/1, query_status_v/1
+	,status/1, status_v/1
+	,bind_q/2, unbind_q/2
+	,declare_exchanges/0
+	,publish_req/1, publish_req/2
+	,publish_query_status/2, publish_query_status/3
+	,publish_status/1, publish_status/2
+	,publish_targeted_status/2, publish_targeted_status/3
         ]).
 
 -include("fax.hrl").
@@ -26,30 +26,30 @@
 -define(FAX_REQ_HEADERS, [<<"Call">>, <<"Action">>]).
 -define(OPTIONAL_FAX_REQ_HEADERS, [<<"Owner-ID">>, <<"FaxBox-ID">>, <<"Fax-T38-Option">>]).
 -define(FAX_REQ_VALUES, [{<<"Event-Category">>,<<"dialplan">>}
-                         ,{<<"Event-Name">>, <<"fax_req">>}
-                         ,{<<"Action">>, [<<"receive">>, <<"transmit">>]}
+			,{<<"Event-Name">>, <<"fax_req">>}
+			,{<<"Action">>, [<<"receive">>, <<"transmit">>]}
                         ]).
 -define(FAX_REQ_TYPES, [{<<"Call">>, fun kz_json:is_json_object/1}]).
 
 -define(FAX_QUERY_HEADERS, [<<"Job-ID">>]).
 -define(OPTIONAL_FAX_QUERY_HEADERS, []).
 -define(FAX_QUERY_VALUES, [{<<"Event-Category">>,<<"fax">>}
-                           ,{<<"Event-Name">>, <<"query_status">>}
+			  ,{<<"Event-Name">>, <<"query_status">>}
                           ]).
 -define(FAX_QUERY_TYPES, []).
 
 -define(FAX_STATUS_HEADERS, [<<"Job-ID">>]).
 -define(OPTIONAL_FAX_STATUS_HEADERS, [<<"Status">>, <<"FaxBox-ID">>
-                                      ,<<"Account-ID">>, <<"Fax-Info">>
-                                      ,<<"Cloud-Job-ID">>, <<"Cloud-Printer-ID">>
-                                      ,<<"Fax-State">>, <<"Direction">>, <<"Page">>
-                                      ,<<"Caller-ID-Number">>, <<"Caller-ID-Name">>
-                                      ,<<"Callee-ID-Number">>, <<"Callee-ID-Name">>
+				     ,<<"Account-ID">>, <<"Fax-Info">>
+				     ,<<"Cloud-Job-ID">>, <<"Cloud-Printer-ID">>
+				     ,<<"Fax-State">>, <<"Direction">>, <<"Page">>
+				     ,<<"Caller-ID-Number">>, <<"Caller-ID-Name">>
+				     ,<<"Callee-ID-Number">>, <<"Callee-ID-Name">>
                                      ]).
 -define(FAX_STATUS_VALUES, [{<<"Event-Category">>,<<"fax">>}
-                            ,{<<"Event-Name">>, <<"status">>}
-                            ,{<<"Fax-State">>, ?FAX_STATE_LIST}
-                            ,{<<"Direction">>, [?FAX_INCOMING, ?FAX_OUTGOING]}
+			   ,{<<"Event-Name">>, <<"status">>}
+			   ,{<<"Fax-State">>, ?FAX_STATE_LIST}
+			   ,{<<"Direction">>, [?FAX_INCOMING, ?FAX_OUTGOING]}
                            ]).
 -define(FAX_STATUS_TYPES, []).
 

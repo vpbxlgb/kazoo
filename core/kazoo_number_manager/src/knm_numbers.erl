@@ -9,18 +9,18 @@
 -module(knm_numbers).
 
 -export([get/1, get/2
-         ,create/1, create/2
-         ,move/1, move/2, move/3
-         ,update/1, update/2, update/3
-         ,reconcile/2
-         ,release/1, release/2
-         ,change_state/1, change_state/2
-         ,assigned_to_app/1, assigned_to_app/2
+	,create/1, create/2
+	,move/1, move/2, move/3
+	,update/1, update/2, update/3
+	,reconcile/2
+	,release/1, release/2
+	,change_state/1, change_state/2
+	,assigned_to_app/1, assigned_to_app/2
 
-         ,free/1
-         ,emergency_enabled/1
+	,free/1
+	,emergency_enabled/1
 
-         ,account_listing/1
+	,account_listing/1
         ]).
 
 -include("knm.hrl").

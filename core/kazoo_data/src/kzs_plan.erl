@@ -134,7 +134,7 @@ account_modb_dataplan(AccountMODB, DocType, StorageId) ->
 -spec dataplan_connections(map(),map()) -> [{atom(), server()}].
 dataplan_connections(Map, Index) ->
     [maybe_start_connection(C, maps:get(C, Index, #{}))
-      || {_, #{<<"connection">> := C}} <- maps:to_list(Map)
+     || {_, #{<<"connection">> := C}} <- maps:to_list(Map)
     ].
 
 -spec dataplan_match(ne_binary(), map(), api_binary()) -> map().
@@ -216,8 +216,8 @@ dataplan_type_match(Classification, DocType, Plan, AccountId) ->
                                 ,<<"settings">> := AttSettings
                                 }
              } = GAtt,
-             AttHandler = kz_util:to_atom(AttHandlerBin,'true'),
-             Params = maps:merge(AttSettings, maps:get(<<"params">>, TypeAttMap, #{})),
+	    AttHandler = kz_util:to_atom(AttHandlerBin,'true'),
+	    Params = maps:merge(AttSettings, maps:get(<<"params">>, TypeAttMap, #{})),
             #{tag => Tag
              ,server => Server
              ,att_proxy => 'true'
@@ -271,7 +271,7 @@ fetch_cached_dataplan(Key, Fun) ->
             {Keys, PlanJObj} = Fun(Key),
             Plan = kz_json:to_map(PlanJObj),
             CacheProps = [{'origin', [{'db', ?KZ_DATA_DB, K } || K <- Keys]}
-                          ,{'expires','infinity'}
+			 ,{'expires','infinity'}
                          ],
             kz_cache:store_local(?KAZOO_DATA_PLAN_CACHE, {'plan', Key}, Plan, CacheProps),
             Plan
@@ -295,7 +295,7 @@ fetch_dataplan_from_file(Id) ->
                                          ,[Id, ".json"]
                                          ),
     kzs_cache:add_to_doc_cache(?KZ_DATA_DB, Id, JObj),
-     JObj.
+    JObj.
 
 -spec default_dataplan() -> kz_json:object().
 default_dataplan() ->

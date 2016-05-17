@@ -10,12 +10,12 @@
 -module(cb_ledgers).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1
-         ,resource_exists/0, resource_exists/1
-         ,authenticate/1
-         ,authorize/1
-         ,validate/1, validate/2
-         ,put/2
+	,allowed_methods/0, allowed_methods/1
+	,resource_exists/0, resource_exists/1
+	,authenticate/1
+	,authorize/1
+	,validate/1, validate/2
+	,put/2
         ]).
 
 -include("crossbar.hrl").
@@ -164,11 +164,11 @@ credit_or_debit(Context, Action) ->
 
     Props =
         props:filter_undefined([
-            {<<"amount">>, kz_json:get_value(<<"amount">>, ReqData)}
-            ,{<<"description">>, kz_json:get_value(<<"description">>, ReqData)}
-            ,{<<"period_start">>, kz_json:get_value([<<"period">>, <<"start">>], ReqData)}
-            ,{<<"period_end">>, kz_json:get_value([<<"period">>, <<"end">>], ReqData)}
-        ]),
+				{<<"amount">>, kz_json:get_value(<<"amount">>, ReqData)}
+			       ,{<<"description">>, kz_json:get_value(<<"description">>, ReqData)}
+			       ,{<<"period_start">>, kz_json:get_value([<<"period">>, <<"start">>], ReqData)}
+			       ,{<<"period_end">>, kz_json:get_value([<<"period">>, <<"end">>], ReqData)}
+			       ]),
 
     case process_action(Action, SrcService, SrcId, AccountId, Usage, Props) of
         {'error', Reason} ->
@@ -185,7 +185,7 @@ credit_or_debit(Context, Action) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec process_action(ne_binary(), ne_binary(), ne_binary()
-                     ,ne_binary(), kz_proplist(), kz_proplist()) ->
+		    ,ne_binary(), kz_proplist(), kz_proplist()) ->
                             {'ok', kz_json:object()} |
                             {'error', any()}.
 process_action(?CREDIT, SrcService, SrcId, Account, Usage, Props) ->
@@ -221,11 +221,11 @@ read_ledger(Context, Ledger) ->
             crossbar_util:response('error', Reason, Context);
         {'ok', Value} ->
             crossbar_util:response(
-                kz_json:from_list([
-                    {Ledger, Value}
-                ])
-                ,Context
-            )
+	      kz_json:from_list([
+				 {Ledger, Value}
+				])
+				  ,Context
+	     )
     end.
 
 %%--------------------------------------------------------------------

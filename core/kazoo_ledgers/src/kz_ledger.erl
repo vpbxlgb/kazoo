@@ -11,8 +11,8 @@
 -include("kzl.hrl").
 
 -export([get/2
-         ,credit/4, credit/5
-         ,debit/4, debit/5
+	,credit/4, credit/5
+	,debit/4, debit/5
         ]).
 
 -type save_return() :: {'ok', ledger()} | {'error', any()}.
@@ -28,9 +28,9 @@
                  {'error', any()}.
 get(Account, Name) ->
     Options = [
-        'reduce'
-        ,{'key', Name}
-    ],
+	       'reduce'
+	      ,{'key', Name}
+	      ],
     case kazoo_modb:get_results(Account, ?LIST_BY_SERVICE, Options) of
         {'ok', []} -> {'ok', 0};
         {'error', _R}=Error -> Error;
@@ -45,7 +45,7 @@ get(Account, Name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec credit(ne_binary(), ne_binary()
-             ,ne_binary(), kz_proplist()) -> save_return().
+	    ,ne_binary(), kz_proplist()) -> save_return().
 -spec credit(ne_binary(), ne_binary(), ne_binary()
             ,kz_proplist(), kz_proplist()) -> save_return().
 credit(SrcService, SrcId, Account, Usage) ->
@@ -61,9 +61,9 @@ credit(SrcService, SrcId, Account, Usage, Props) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec debit(ne_binary(), ne_binary()
-             ,ne_binary(), kz_proplist()) -> save_return().
+	   ,ne_binary(), kz_proplist()) -> save_return().
 -spec debit(ne_binary(), ne_binary(), ne_binary()
-            ,kz_proplist(), kz_proplist()) -> save_return().
+	   ,kz_proplist(), kz_proplist()) -> save_return().
 debit(SrcService, SrcId, Account, Usage) ->
     debit(SrcService, SrcId, Account, Usage, []).
 
@@ -81,17 +81,17 @@ debit(SrcService, SrcId, Account, Usage, Props) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec create(ne_binary(), ne_binary(), ne_binary()
-             ,ne_binary(), kz_proplist(), kz_proplist()) -> save_return().
+	    ,ne_binary(), kz_proplist(), kz_proplist()) -> save_return().
 create(Type, SrcService, SrcId, Account, Usage, Props) ->
     Routines = [
-        {fun kazoo_ledger:set_type/2, Type}
-        ,{fun kazoo_ledger:set_source_service/2, SrcService}
-        ,{fun kazoo_ledger:set_source_id/2, SrcId}
-        ,{fun set_account/2, Account}
-        ,{fun set_usage/2, Usage}
-        ,{fun set_extra/2, Props}
-        ,fun kazoo_ledger:save/1
-    ],
+		{fun kazoo_ledger:set_type/2, Type}
+	       ,{fun kazoo_ledger:set_source_service/2, SrcService}
+	       ,{fun kazoo_ledger:set_source_id/2, SrcId}
+	       ,{fun set_account/2, Account}
+	       ,{fun set_usage/2, Usage}
+	       ,{fun set_extra/2, Props}
+	       ,fun kazoo_ledger:save/1
+	       ],
     lists:foldl(fun apply_routine/2, kazoo_ledger:new(), Routines).
 
 %%--------------------------------------------------------------------
@@ -104,9 +104,9 @@ create(Type, SrcService, SrcId, Account, Usage, Props) ->
 set_account(Ledger, Account) ->
     AccountId = kz_util:format_account_id(Account, 'raw'),
     Routines = [
-        {fun kazoo_ledger:set_account_id/2, AccountId}
-        ,{fun kazoo_ledger:set_account_name/2, kapps_util:get_account_name(AccountId)}
-    ],
+		{fun kazoo_ledger:set_account_id/2, AccountId}
+	       ,{fun kazoo_ledger:set_account_name/2, kapps_util:get_account_name(AccountId)}
+	       ],
     lists:foldl(fun apply_routine/2, Ledger, Routines).
 
 %%--------------------------------------------------------------------

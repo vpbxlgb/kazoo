@@ -23,11 +23,11 @@
 
 %% gen_server callbacks
 -export([init/1
-         ,handle_call/3
-         ,handle_cast/2
-         ,handle_info/2
-         ,terminate/2
-         ,code_change/3
+	,handle_call/3
+	,handle_cast/2
+	,handle_info/2
+	,terminate/2
+	,code_change/3
         ]).
 
 -export([send_notify/2]).
@@ -36,28 +36,28 @@
 -type xmpp_client() :: #client{}. %% escalus
 
 -record(state, {faxbox_id :: ne_binary()
-                ,printer_id :: ne_binary()
-                ,oauth_app_id :: ne_binary()
-                ,refresh_token :: oauth_refresh_token()
-                ,connected = 'false' :: boolean()
-                ,session :: xmpp_client()
-                ,jid :: ne_binary()
-                ,monitor :: reference()
+	       ,printer_id :: ne_binary()
+	       ,oauth_app_id :: ne_binary()
+	       ,refresh_token :: oauth_refresh_token()
+	       ,connected = 'false' :: boolean()
+	       ,session :: xmpp_client()
+	       ,jid :: ne_binary()
+	       ,monitor :: reference()
                }).
 
 -type state() :: #state{}.
-%-type packet() :: #received_packet{}.
-%-type jid() :: #jid{}.
+						%-type packet() :: #received_packet{}.
+						%-type jid() :: #jid{}.
 
 start(PrinterId) ->
-  gen_server:start({'local', kz_util:to_atom(PrinterId, 'true')}, ?MODULE, [PrinterId], []).
+    gen_server:start({'local', kz_util:to_atom(PrinterId, 'true')}, ?MODULE, [PrinterId], []).
 
 -spec start_link(ne_binary()) -> startlink_ret().
 start_link(PrinterId) ->
-  gen_server:start_link({'local', kz_util:to_atom(PrinterId, 'true')}, ?MODULE, [PrinterId], []).
+    gen_server:start_link({'local', kz_util:to_atom(PrinterId, 'true')}, ?MODULE, [PrinterId], []).
 
 stop(PrinterId) ->
-  gen_server:cast({'local', kz_util:to_atom(PrinterId, 'true')}, 'stop').
+    gen_server:cast({'local', kz_util:to_atom(PrinterId, 'true')}, 'stop').
 
 init([PrinterId]) ->
     process_flag('trap_exit', 'true'),
@@ -65,7 +65,7 @@ init([PrinterId]) ->
     {'ok', #state{faxbox_id=PrinterId}, ?POLLING_INTERVAL}.
 
 handle_call(_Request, _From, State) ->
-  {'reply', 'ok', State}.
+    {'reply', 'ok', State}.
 
 handle_cast('start', #state{faxbox_id=FaxBoxId} = State) ->
     case kz_datamgr:open_doc(?KZ_FAXES_DB, FaxBoxId) of
@@ -76,8 +76,8 @@ handle_cast('start', #state{faxbox_id=FaxBoxId} = State) ->
     end;
 
 handle_cast('connect', #state{oauth_app_id=AppId
-                              ,jid=JID
-                              ,refresh_token=RefreshToken
+			     ,jid=JID
+			     ,refresh_token=RefreshToken
                              }=State) ->
     {'ok', App} = kazoo_oauth_util:get_oauth_app(AppId),
     {'ok', #oauth_token{token=Token}} = kazoo_oauth_util:token(App, RefreshToken),
@@ -86,10 +86,10 @@ handle_cast('connect', #state{oauth_app_id=AppId
             Monitor = erlang:monitor('process', Pid),
             gen_server:cast(self(), 'subscribe'),
             {'noreply', State#state{monitor=Monitor
-                                    ,session=MySession
-                                    ,connected='true'
+				   ,session=MySession
+				   ,connected='true'
                                    }
-             ,?POLLING_INTERVAL
+	    ,?POLLING_INTERVAL
             };
         _ ->
             {'stop', <<"Error connecting to xmpp server">>, State}
@@ -99,7 +99,7 @@ handle_cast('status', State) ->
     {'noreply', State, ?POLLING_INTERVAL};
 
 handle_cast('subscribe', #state{jid=MyJID
-                                ,session=MySession
+			       ,session=MySession
                                }=State) ->
     lager:debug("xmpp subscribe ~s",[MyJID]),
     IQ = escalus_stanza:from_xml(get_sub_msg(MyJID)),
@@ -117,17 +117,17 @@ handle_info('timeout', State) ->
     gen_server:cast(self(), 'subscribe'),
     {'noreply', State, ?POLLING_INTERVAL};
 handle_info({'DOWN', MonitorRef, _Type, _Object, _Info}=A, #state{monitor=MonitorRef}=State) ->
-  lager:debug("xmpp session down ~p",[A]),
-  gen_server:cast(self(), 'start'),
-  {'noreply', State, ?POLLING_INTERVAL};
+    lager:debug("xmpp session down ~p",[A]),
+    gen_server:cast(self(), 'start'),
+    {'noreply', State, ?POLLING_INTERVAL};
 handle_info(_Info, State) ->
     lager:debug("xmpp handle_info ~p",[_Info]),
     {'noreply', State, ?POLLING_INTERVAL}.
 
 terminate(_Reason, #state{jid=JID
-                          ,session=MySession
-                          ,monitor=MonitorRef
-                          ,connected='true'
+			 ,session=MySession
+			 ,monitor=MonitorRef
+			 ,connected='true'
                          }) ->
     lager:debug("terminating xmpp session ~s",[JID]),
     erlang:demonitor(MonitorRef, ['flush']),
@@ -153,11 +153,11 @@ get_sub_msg(JID) ->
 
 -spec process_received_packet(exml:element(), state()) -> any().
 process_received_packet(#xmlel{name = <<"message">>}=Xml
-                        ,#state{jid=JID}) ->
+		       ,#state{jid=JID}) ->
     BareJID = kapi_xmpp:jid_short(JID),
     Push = exml_query:path(Xml, [{'element', <<"push:push">>}
-                                 ,{'element', <<"push:data">>}
-                                 ,'cdata'
+				,{'element', <<"push:data">>}
+				,'cdata'
                                 ]),
     case Push of
         'undefined' -> 'undefined';
@@ -172,10 +172,10 @@ process_received_packet(#xmlel{name=Type}=Xml, _State) ->
 send_notify(PrinterId, JID) ->
     Payload = props:filter_undefined(
                 [{<<"Event-Name">>, <<"push">>}
-                 ,{<<"Application-Name">>, <<"GCP">>}
-                 ,{<<"Application-Event">>, <<"Queued-Job">>}
-                 ,{<<"Application-Data">>, PrinterId}
-                 ,{<<"JID">>, JID}
+		,{<<"Application-Name">>, <<"GCP">>}
+		,{<<"Application-Event">>, <<"Queued-Job">>}
+		,{<<"Application-Data">>, PrinterId}
+		,{<<"JID">>, JID}
                  | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
                 ]),
     lager:debug("received xmpp push for printer ~s", [PrinterId]),
@@ -186,12 +186,12 @@ send_notify(PrinterId, JID) ->
                      {'error', any()}.
 connect(JID, Password) ->
     Options = [{username, kapi_xmpp:jid_username(JID)}
-               ,{server, kapi_xmpp:jid_server(JID)}
-               ,{resource, kapi_xmpp:jid_resource(JID)}
-               ,{password, Password}
-               ,{host, ?XMPP_SERVER}
-               ,{auth, {fax_xmpp, auth_xoauth2}}
-               ,{starttls, optional}
+	      ,{server, kapi_xmpp:jid_server(JID)}
+	      ,{resource, kapi_xmpp:jid_resource(JID)}
+	      ,{password, Password}
+	      ,{host, ?XMPP_SERVER}
+	      ,{auth, {fax_xmpp, auth_xoauth2}}
+	      ,{starttls, optional}
               ],
     try escalus_connection:start(Options) of
         {ok, Conn, _Props, _} -> {ok, Conn};
@@ -220,9 +220,9 @@ handle_start(JObj, State) ->
     RefreshToken = #oauth_refresh_token{token=kz_json:get_value(<<"pvt_cloud_refresh_token">>, JObj)},
     gen_server:cast(self(), 'connect'),
     State#state{printer_id=PrinterId
-                ,oauth_app_id=AppId
-                ,jid=FullJID
-                ,refresh_token=RefreshToken
+	       ,oauth_app_id=AppId
+	       ,jid=FullJID
+	       ,refresh_token=RefreshToken
                }.
 
 auth_xoauth2(Conn, Props) ->

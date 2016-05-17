@@ -11,13 +11,13 @@
 -module(cb_callflows).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1
-         ,resource_exists/0, resource_exists/1
-         ,validate/1, validate/2
-         ,put/1
-         ,post/2
-         ,patch/2
-         ,delete/2
+	,allowed_methods/0, allowed_methods/1
+	,resource_exists/0, resource_exists/1
+	,validate/1, validate/2
+	,put/1
+	,post/2
+	,patch/2
+	,delete/2
         ]).
 
 -include("crossbar.hrl").
@@ -159,11 +159,11 @@ load_callflow(DocId, Context) ->
     case cb_context:resp_status(Context1) of
         'success' ->
             Meta = get_metadata(kz_json:get_value(<<"flow">>, cb_context:doc(Context1))
-                                ,cb_context:account_db(Context1)
-                                ,kz_json:new()
+			       ,cb_context:account_db(Context1)
+			       ,kz_json:new()
                                ),
             cb_context:set_resp_data(Context1
-                                     ,kz_json:set_value(<<"metadata">>, Meta, cb_context:resp_data(Context1))
+				    ,kz_json:set_value(<<"metadata">>, Meta, cb_context:resp_data(Context1))
                                     );
         _Status -> Context1
     end.
@@ -182,7 +182,7 @@ validate_request(CallflowId, Context) ->
         [] -> prepare_patterns(CallflowId, Context);
         Numbers ->
             C = cb_context:set_req_data(Context
-                                        ,kz_json:set_value(<<"numbers">>, Numbers, JObj)
+				       ,kz_json:set_value(<<"numbers">>, Numbers, JObj)
                                        ),
             validate_unique_numbers(CallflowId, Numbers, C)
     catch
@@ -230,11 +230,11 @@ prepare_patterns(CallflowId, Context) ->
         [] ->
             C = cb_context:add_validation_error(
                   <<"numbers">>
-                  ,<<"required">>
-                  ,kz_json:from_list(
-                     [{<<"message">>, <<"Callflows must be assigned at least one number">>}]
-                    )
-                  ,Context
+					       ,<<"required">>
+					       ,kz_json:from_list(
+						  [{<<"message">>, <<"Callflows must be assigned at least one number">>}]
+						 )
+					       ,Context
                  ),
             check_callflow_schema(CallflowId, C);
         _Else ->
@@ -275,9 +275,9 @@ check_callflow_schema(CallflowId, Context) ->
 -spec on_successful_validation(api_binary(), cb_context:context()) -> cb_context:context().
 on_successful_validation('undefined', Context) ->
     cb_context:set_doc(Context
-                       ,kz_doc:set_type(cb_context:doc(Context)
-                                        ,kzd_callflow:type()
-                                       )
+		      ,kz_doc:set_type(cb_context:doc(Context)
+				      ,kzd_callflow:type()
+				      )
                       );
 on_successful_validation(CallflowId, Context) ->
     crossbar_doc:load_merge(CallflowId, Context, ?TYPE_CHECK_OPTION(kzd_callflow:type())).
@@ -293,8 +293,8 @@ validate_callflow_elements(Context, Flow) ->
     Data = kz_json:get_value(<<"data">>, Flow),
     C = validate_callflow_element(
           validate_callflow_element_schema(Context, Module, Data)
-          ,Module
-          ,Data
+				 ,Module
+				 ,Data
          ),
 
     case cb_context:resp_status(C) of
@@ -308,9 +308,9 @@ validate_callflow_elements(Context, Flow) ->
 validate_callflow_element_schema(Context, Module, Data) ->
     lager:debug("validating callflow el: ~s", [Module]),
     cb_context:validate_request_data(<<"callflows.", Module/binary>>
-                                     ,cb_context:set_req_data(Context, Data)
-                                     ,fun(_C) -> Context end
-                                     ,fun(C) -> cb_context:set_doc(C, cb_context:doc(Context)) end
+				    ,cb_context:set_req_data(Context, Data)
+				    ,fun(_C) -> Context end
+				    ,fun(C) -> cb_context:set_doc(C, cb_context:doc(Context)) end
                                     ).
 
 -spec validate_callflow_element(cb_context:context(), ne_binary(), kz_json:object()) ->
@@ -325,12 +325,12 @@ validate_callflow_element(Context, <<"record_call">>, Data) ->
             lager:debug("the requested time limit is too damn high"),
             cb_context:add_validation_error(
               <<"time_limit">>
-              ,<<"maximum">>
-              ,kz_json:from_list(
-                 [{<<"message">>, <<"Exceeds system limit of ", (kz_util:to_binary(Max))/binary, " seconds">>}
-                  ,{<<"cause">>, TimeLimit}
-                 ])
-              ,Context
+					   ,<<"maximum">>
+					   ,kz_json:from_list(
+					      [{<<"message">>, <<"Exceeds system limit of ", (kz_util:to_binary(Max))/binary, " seconds">>}
+					      ,{<<"cause">>, TimeLimit}
+					      ])
+					   ,Context
              );
         'false' -> Context
     catch
@@ -338,12 +338,12 @@ validate_callflow_element(Context, <<"record_call">>, Data) ->
             lager:debug("failed to get integer from data: ~s: ~p", [_E, _R]),
             cb_context:add_validation_error(
               <<"time_limit">>
-              ,<<"type">>
-              ,kz_json:from_list(
-                 [{<<"message">>, <<"Must be an integer">>}
-                  ,{<<"cause">>, TimeLimit}
-                 ])
-              ,Context
+					   ,<<"type">>
+					   ,kz_json:from_list(
+					      [{<<"message">>, <<"Must be an integer">>}
+					      ,{<<"cause">>, TimeLimit}
+					      ])
+					   ,Context
              )
     end;
 validate_callflow_element(Context, _Module, _Data) ->
@@ -446,7 +446,7 @@ track_assignment('delete', Context) ->
                               cb_context:context().
 check_uniqueness(Numbers, JObjs, Context) ->
     Routines = [fun(C) -> check_numbers_uniqueness(Numbers, JObjs, C) end
-                ,fun(C) -> check_patterns_uniqueness(Numbers, JObjs, C) end
+	       ,fun(C) -> check_patterns_uniqueness(Numbers, JObjs, C) end
                ],
     lists:foldl(fun(F, C) -> F(C) end, Context, Routines).
 
@@ -455,7 +455,7 @@ check_uniqueness(Numbers, JObjs, Context) ->
 check_numbers_uniqueness([], _, Context) -> Context;
 check_numbers_uniqueness([Number|Numbers], JObjs, Context) ->
     case lists:dropwhile(fun(J) -> is_number_unique(J, Number) end
-                         ,JObjs
+			,JObjs
                         )
     of
         [] -> check_numbers_uniqueness(Numbers, JObjs, Context);
@@ -474,7 +474,7 @@ is_number_unique(J, Number) ->
 check_patterns_uniqueness([], _, Context) -> Context;
 check_patterns_uniqueness([Number|Numbers], JObjs, Context) ->
     case lists:dropwhile(fun(J) -> is_pattern_unique(J, Number) end
-                         ,JObjs
+			,JObjs
                         )
     of
         [] -> check_patterns_uniqueness(Numbers, JObjs, Context);
@@ -498,7 +498,7 @@ filter_callflow_list(CallflowId, JObjs) ->
     [JObj
      || JObj <- JObjs,
         kz_doc:id(JObj) =/= CallflowId
-        andalso not(kzd_callflow:is_feature_code(kz_json:get_value(<<"doc">>, JObj)))
+	    andalso not(kzd_callflow:is_feature_code(kz_json:get_value(<<"doc">>, JObj)))
     ].
 
 -spec patterns_dont_match(ne_binary(), ne_binaries()) -> boolean().
@@ -515,22 +515,22 @@ add_number_conflict(Number, JObj, Context) ->
         'undefined' ->
             cb_context:add_validation_error(
               <<"numbers">>
-              ,<<"unique">>
-              ,kz_json:from_list(
-                 [{<<"message">>, <<"Number ", Number/binary, " exists in callflow ", Id/binary>>}
-                  ,{<<"cause">>, Number}
-                 ])
-              ,Context
+					   ,<<"unique">>
+					   ,kz_json:from_list(
+					      [{<<"message">>, <<"Number ", Number/binary, " exists in callflow ", Id/binary>>}
+					      ,{<<"cause">>, Number}
+					      ])
+					   ,Context
              );
         _Else ->
             cb_context:add_validation_error(
               <<"numbers">>
-              ,<<"unique">>
-              ,kz_json:from_list(
-                 [{<<"message">>, <<"Number ", Number/binary, " conflicts with featurecode callflow ", Id/binary>>}
-                  ,{<<"cause">>, Number}
-                 ])
-              ,Context
+					   ,<<"unique">>
+					   ,kz_json:from_list(
+					      [{<<"message">>, <<"Number ", Number/binary, " conflicts with featurecode callflow ", Id/binary>>}
+					      ,{<<"cause">>, Number}
+					      ])
+					   ,Context
              )
     end.
 
@@ -546,7 +546,7 @@ get_metadata('undefined', _, JObj) -> JObj;
 get_metadata(Flow, Db, JObj) ->
     JObj1 = case kz_json:get_first_defined(
                    [[<<"data">>, <<"id">>]
-                    ,[<<"data">>, <<"faxbox_id">>]
+		   ,[<<"data">>, <<"faxbox_id">>]
                    ], Flow)
             of
                 %% this node has no id, dont change the metadata
@@ -593,9 +593,9 @@ create_metadata(Doc) ->
                        case kz_doc:type(D) of
                            <<"user">> ->
                                case <<(kz_json:get_binary_value(<<"first_name">>, D, <<>>))/binary
-                                        ," "
-                                        ,(kz_json:get_binary_value(<<"last_name">>, D, <<>>))/binary
-                                      >>
+				      ," "
+				      ,(kz_json:get_binary_value(<<"last_name">>, D, <<>>))/binary
+				    >>
                                of
                                    <<>> -> J;
                                    <<" ">> -> J;
@@ -615,11 +615,11 @@ create_metadata(Doc) ->
                end,
     %% list of keys to extract from documents and set on the metadata
     Funs = [fun(D, J) -> Metadata(<<"name">>, D, J) end
-            ,fun(D, J) -> Metadata(<<"numbers">>, D, J) end
-            ,fun(D, J) -> Metadata(<<"pvt_type">>, D, J) end
+	   ,fun(D, J) -> Metadata(<<"numbers">>, D, J) end
+	   ,fun(D, J) -> Metadata(<<"pvt_type">>, D, J) end
            ],
     %% do it
     lists:foldl(fun(Fun, JObj) ->
-                         Fun(Doc, JObj)
+			Fun(Doc, JObj)
                 end, kz_json:new(), Funs
                ).

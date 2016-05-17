@@ -13,13 +13,13 @@
 -module(cb_conferences).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1, allowed_methods/2
-         ,resource_exists/0, resource_exists/1, resource_exists/2
-         ,validate/1, validate/2, validate/3
-         ,put/1
-         ,post/2
-         ,patch/2
-         ,delete/2
+	,allowed_methods/0, allowed_methods/1, allowed_methods/2
+	,resource_exists/0, resource_exists/1, resource_exists/2
+	,validate/1, validate/2, validate/3
+	,put/1
+	,post/2
+	,patch/2
+	,delete/2
         ]).
 
 -include("crossbar.hrl").
@@ -56,7 +56,7 @@ allowed_methods() ->
 allowed_methods(_) ->
     [?HTTP_GET, ?HTTP_POST, ?HTTP_PATCH, ?HTTP_DELETE].
 allowed_methods(_, <<"details">>) ->
-	[?HTTP_GET].
+    [?HTTP_GET].
 
 %%--------------------------------------------------------------------
 %% @public
@@ -175,14 +175,14 @@ maybe_create_conference(Context) ->
                 {'true', Number} ->
                     lager:error("number ~s is already used", [Number]),
                     cb_context:add_validation_error(
-                        [<<"numbers">>]
-                        ,<<"unique">>
-                        ,kz_json:from_list([
-                            {<<"message">>, <<"Number already in use">>}
-                            ,{<<"cause">>, Number}
-                         ])
-                        ,Context
-                    )
+		      [<<"numbers">>]
+						   ,<<"unique">>
+						   ,kz_json:from_list([
+								       {<<"message">>, <<"Number already in use">>}
+								      ,{<<"cause">>, Number}
+								      ])
+						   ,Context
+		     )
             end
     end.
 
@@ -235,14 +235,14 @@ load_conference(DocId, Context) ->
 load_conference_details(Context, ConfId) ->
     AccountRealm = kz_util:get_account_realm(cb_context:account_id(Context)),
     Req = [{<<"Realm">>, AccountRealm}
-           ,{<<"Fields">>, []}
-           ,{<<"Conference-ID">>, ConfId}
+	  ,{<<"Fields">>, []}
+	  ,{<<"Conference-ID">>, ConfId}
            | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
           ],
     ReqResp = kapps_util:amqp_pool_collect(Req
-                                            ,fun kapi_conference:publish_search_req/1
-                                            ,{'ecallmgr', 'true'}
-                                           ),
+					  ,fun kapi_conference:publish_search_req/1
+					  ,{'ecallmgr', 'true'}
+					  ),
     case ReqResp of
         {'error', _} -> cb_context:add_system_error('not_found', Context);
         {_, JObjs} -> participant_details(conference_participants(JObjs), Context)
@@ -251,7 +251,7 @@ load_conference_details(Context, ConfId) ->
 -spec conference_participants(kz_json:objects()) -> kz_json:objects().
 conference_participants(JObjs) ->
     [Participant || JObj <- JObjs
-                    ,Participant <- kz_json:get_value(<<"Participants">>, JObj, [])
+			,Participant <- kz_json:get_value(<<"Participants">>, JObj, [])
     ].
 
 -spec participant_details(kz_json:objects(), cb_context:context()) -> cb_context:context().
@@ -269,15 +269,15 @@ participant_details([H|T], Context, Acc) ->
            | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
           ],
     case kapps_util:amqp_pool_request(Req
-                                       ,fun kapi_call:publish_channel_status_req/1
-                                       ,fun kapi_call:channel_status_resp_v/1
-                                      ) of
+				     ,fun kapi_call:publish_channel_status_req/1
+				     ,fun kapi_call:channel_status_resp_v/1
+				     ) of
         {'error', E} ->
             lager:debug("error fetching channel status for ~s (~p)", [CallId, E]),
             participant_details(T, Context, Acc);
         {'ok', Resp} ->
             Participant = kz_json:set_values([{<<"Participant-ID">>, kz_json:get_ne_binary_value(<<"Participant-ID">>, H)}
-                                              ,{<<"Mute">>, not kz_json:is_true(<<"Speak">>, H)}
+					     ,{<<"Mute">>, not kz_json:is_true(<<"Speak">>, H)}
                                              ], Resp),
             participant_details(T, Context, [Participant | Acc])
     end.
@@ -289,7 +289,7 @@ participant_details([H|T], Context, Acc) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec do_conference_action(cb_context:context(), path_token(), kz_json:json_term(), kz_json:json_term()) ->
-                             cb_context:context().
+				  cb_context:context().
 do_conference_action(Context, _, _, 'undefined') ->
     cb_context:add_system_error('participant_missing', Context);
 do_conference_action(Context, Id, Action, ParticipantId) ->
@@ -297,13 +297,13 @@ do_conference_action(Context, Id, Action, ParticipantId) ->
     ConfDoc = cb_context:doc(load_conference(Id, Context)),
     ConfOwnerId = kz_json:get_value(<<"owner_id">>, ConfDoc),
     AuthOwnerId = kz_json:get_value(<<"owner_id">>, AuthDoc),
-    % Abort if the user is not room owner
+						% Abort if the user is not room owner
     case ConfOwnerId of
         AuthOwnerId ->
             Conference = kapps_conference:set_id(Id, kapps_conference:new()),
             Resp = kz_json:set_value(<<"resp">>
-                                     ,perform_conference_action(Conference, Action, ParticipantId)
-                                     ,kz_json:new()
+				    ,perform_conference_action(Conference, Action, ParticipantId)
+				    ,kz_json:new()
                                     ),
             crossbar_doc:handle_json_success(Resp, Context);
         _ -> cb_context:add_system_error('forbidden', Context)
@@ -351,7 +351,7 @@ patch_conference(DocId, Context) ->
 -spec on_successful_validation(api_binary(), cb_context:context()) -> cb_context:context().
 on_successful_validation('undefined', Context) ->
     cb_context:set_doc(Context
-                       ,kz_doc:set_type(cb_context:doc(Context), <<"conference">>)
+		      ,kz_doc:set_type(cb_context:doc(Context), <<"conference">>)
                       );
 on_successful_validation(DocId, Context) ->
     crossbar_doc:load_merge(DocId, Context, ?TYPE_CHECK_OPTION(<<"conference">>)).

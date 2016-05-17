@@ -11,7 +11,7 @@
 -include("callflow.hrl").
 
 -export([handle/2
-         ,get_endpoints/3
+	,get_endpoints/3
         ]).
 
 %%--------------------------------------------------------------------
@@ -32,13 +32,13 @@ handle(Data, Call) ->
     IgnoreEarlyMedia = cf_util:ignore_early_media(Endpoints),
 
     Command = [{<<"Application-Name">>, <<"bridge">>}
-        ,{<<"Endpoints">>, Endpoints}
-        ,{<<"Timeout">>, Timeout}
-        ,{<<"Ignore-Early-Media">>, IgnoreEarlyMedia}
-        ,{<<"Fail-On-Single-Reject">>, FailOnSingleReject}
-        ,{<<"Dial-Endpoint-Method">>, Strategy}
-        ,{<<"Ignore-Forward">>, <<"false">>}
-    ],
+	      ,{<<"Endpoints">>, Endpoints}
+	      ,{<<"Timeout">>, Timeout}
+	      ,{<<"Ignore-Early-Media">>, IgnoreEarlyMedia}
+	      ,{<<"Fail-On-Single-Reject">>, FailOnSingleReject}
+	      ,{<<"Dial-Endpoint-Method">>, Strategy}
+	      ,{<<"Ignore-Forward">>, <<"false">>}
+	      ],
 
     lager:info("attempting ~b user devices with strategy ~s", [length(Endpoints), Strategy]),
     case length(Endpoints) > 0

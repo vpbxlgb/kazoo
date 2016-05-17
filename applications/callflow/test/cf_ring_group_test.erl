@@ -13,8 +13,8 @@
 weighted_random_sort_test() ->
     EndpointsInt = [
                     {1, <<"1">>}
-                    ,{2, <<"2">>}
-                    ,{3, <<"3">>}
+		   ,{2, <<"2">>}
+		   ,{3, <<"3">>}
                    ],
     Endpoints = cf_ring_group:weighted_random_sort(EndpointsInt),
     ?assertEqual(length(EndpointsInt), length(Endpoints)),

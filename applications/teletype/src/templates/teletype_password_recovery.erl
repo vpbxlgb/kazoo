@@ -9,7 +9,7 @@
 -module(teletype_password_recovery).
 
 -export([init/0
-         ,handle_password_recovery/2
+	,handle_password_recovery/2
         ]).
 
 -include("teletype.hrl").
@@ -19,9 +19,9 @@
 -define(TEMPLATE_ID, <<"password_recovery">>).
 
 -define(TEMPLATE_MACROS
-        ,kz_json:from_list([?MACRO_VALUE(<<"link">>, <<"link">>, <<"Password Reset Link">>, <<"Link going to click to reset password">>)
+       ,kz_json:from_list([?MACRO_VALUE(<<"link">>, <<"link">>, <<"Password Reset Link">>, <<"Link going to click to reset password">>)
                            | ?ACCOUNT_MACROS ++ ?USER_MACROS
-                           ])
+			  ])
        ).
 
 -define(TEMPLATE_TEXT, <<"Hello, {{user.first_name}} {{user.last_name}}!\n\nWe received a request to change the password for your 2600hz VoIP Services account \"{{account.name}}\".\nIf you did not make this request, just ignore this email. Otherwise, please click the link below to change your password:\n\n{{link}}">>).
@@ -40,16 +40,16 @@
 init() ->
     kz_util:put_callid(?MODULE),
     teletype_templates:init(?TEMPLATE_ID, [{'macros', ?TEMPLATE_MACROS}
-                                           ,{'text', ?TEMPLATE_TEXT}
-                                           ,{'html', ?TEMPLATE_HTML}
-                                           ,{'subject', ?TEMPLATE_SUBJECT}
-                                           ,{'category', ?TEMPLATE_CATEGORY}
-                                           ,{'friendly_name', ?TEMPLATE_NAME}
-                                           ,{'to', ?TEMPLATE_TO}
-                                           ,{'from', ?TEMPLATE_FROM}
-                                           ,{'cc', ?TEMPLATE_CC}
-                                           ,{'bcc', ?TEMPLATE_BCC}
-                                           ,{'reply_to', ?TEMPLATE_REPLY_TO}
+					  ,{'text', ?TEMPLATE_TEXT}
+					  ,{'html', ?TEMPLATE_HTML}
+					  ,{'subject', ?TEMPLATE_SUBJECT}
+					  ,{'category', ?TEMPLATE_CATEGORY}
+					  ,{'friendly_name', ?TEMPLATE_NAME}
+					  ,{'to', ?TEMPLATE_TO}
+					  ,{'from', ?TEMPLATE_FROM}
+					  ,{'cc', ?TEMPLATE_CC}
+					  ,{'bcc', ?TEMPLATE_BCC}
+					  ,{'reply_to', ?TEMPLATE_REPLY_TO}
                                           ]).
 
 -spec handle_password_recovery(kz_json:object(), kz_proplist()) -> 'ok'.
@@ -64,20 +64,20 @@ handle_password_recovery(JObj, _Props) ->
     case teletype_util:is_notice_enabled(AccountId, JObj, ?TEMPLATE_ID) of
         'false' ->
             lager:debug("notification not enabled for account ~s: prefers ~s"
-                        ,[AccountId
-                          ,kz_account:notification_preference(DataJObj)
-                         ]);
+		       ,[AccountId
+			,kz_account:notification_preference(DataJObj)
+			]);
         'true' ->
             lager:debug("notification enabled for account ~s", [AccountId]),
 
             User = get_user(DataJObj),
             ReqData =
                 kz_json:set_values(
-                    [{<<"user">>, User}
-                     ,{<<"to">>, [kz_json:get_ne_value(<<"email">>, User)]}
-                     ,{<<"link">>, kz_json:get_ne_value([<<"Password-Reset-Link">>], DataJObj, <<"missing_link">>)}
-                    ]
-                  ,DataJObj
+		  [{<<"user">>, User}
+		  ,{<<"to">>, [kz_json:get_ne_value(<<"email">>, User)]}
+		  ,{<<"link">>, kz_json:get_ne_value([<<"Password-Reset-Link">>], DataJObj, <<"missing_link">>)}
+		  ]
+				  ,DataJObj
                  ),
             process_req(kz_json:merge_jobjs(DataJObj, ReqData))
     end.
@@ -86,8 +86,8 @@ handle_password_recovery(JObj, _Props) ->
 get_user(DataJObj) ->
     Ks = [<<"first_name">>, <<"last_name">>, <<"email">>, <<"password">>],
     lists:foldl(fun(K, Acc) -> get_user_fold(K, Acc, DataJObj) end
-                ,kz_json:new()
-                ,Ks
+	       ,kz_json:new()
+	       ,Ks
                ).
 
 -spec get_user_fold(kz_json:key(), kz_json:object(), kz_json:object()) -> kz_json:object().
@@ -97,9 +97,9 @@ get_user_fold(K, Acc, DataJObj) ->
 -spec process_req(kz_json:object()) -> 'ok'.
 process_req(DataJObj) ->
     Macros = [{<<"system">>, teletype_util:system_params()}
-              ,{<<"account">>, teletype_util:account_params(DataJObj)}
-              ,{<<"user">>, teletype_util:public_proplist(<<"user">>, DataJObj)}
-              ,{<<"link">>, kz_json:get_value([<<"link">>], DataJObj)}
+	     ,{<<"account">>, teletype_util:account_params(DataJObj)}
+	     ,{<<"user">>, teletype_util:public_proplist(<<"user">>, DataJObj)}
+	     ,{<<"link">>, kz_json:get_value([<<"link">>], DataJObj)}
              ],
 
     %% Populate templates
@@ -112,7 +112,7 @@ process_req(DataJObj) ->
 
     Subject = teletype_util:render_subject(
                 kz_json:find(<<"subject">>, [DataJObj, TemplateMetaJObj], ?TEMPLATE_SUBJECT)
-                ,Macros
+					  ,Macros
                ),
 
     Emails = teletype_util:find_addresses(DataJObj, TemplateMetaJObj, ?MOD_CONFIG_CAT),

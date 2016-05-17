@@ -40,20 +40,20 @@ delete_test() ->
     L = [{a, 1}, {b, 2}, c, {d, 3}],
     ?assertEqual(L, props:delete(foo, L)),
     ?assertEqual([{a, 1}, {b, 2}, {d, 3}]
-                 ,props:delete(c, L)),
+		,props:delete(c, L)),
     ?assertEqual([{a, 1}, c, {d, 3}]
-                 ,props:delete(b, L)).
+		,props:delete(b, L)).
 
 to_querystring_test() ->
     Tests = [{[], <<>>}
-             ,{[{<<"foo">>, <<"bar">>}], <<"foo=bar">>}
-             ,{[{<<"foo">>, <<"bar">>}, {<<"fizz">>, <<"buzz">>}], <<"foo=bar&fizz=buzz">>}
-             ,{[{'foo', <<"bar">>}
-                ,{<<"fizz">>, <<"buzz">>}
-                ,{<<"arr">>, [1,3,5]}
-               ], <<"foo=bar&fizz=buzz&arr[]=1&arr[]=3&arr[]=5">>}
-             ,{[{<<"Msg-ID">>, <<"123-abc">>}], <<"Msg-ID=123-abc">>}
-             ,{[{<<"url">>, <<"http://user:pass@host:port/">>}], <<"url=http%3A%2F%2Fuser%3Apass%40host%3Aport%2F">>}
+	    ,{[{<<"foo">>, <<"bar">>}], <<"foo=bar">>}
+	    ,{[{<<"foo">>, <<"bar">>}, {<<"fizz">>, <<"buzz">>}], <<"foo=bar&fizz=buzz">>}
+	    ,{[{'foo', <<"bar">>}
+	      ,{<<"fizz">>, <<"buzz">>}
+	      ,{<<"arr">>, [1,3,5]}
+	      ], <<"foo=bar&fizz=buzz&arr[]=1&arr[]=3&arr[]=5">>}
+	    ,{[{<<"Msg-ID">>, <<"123-abc">>}], <<"Msg-ID=123-abc">>}
+	    ,{[{<<"url">>, <<"http://user:pass@host:port/">>}], <<"url=http%3A%2F%2Fuser%3Apass%40host%3Aport%2F">>}
             ],
     lists:foreach(fun({Props, QS}) ->
                           QS1 = kz_util:to_binary(props:to_querystring(Props)),
@@ -83,10 +83,10 @@ insert_values_test() ->
 
 is_defined_test() ->
     Tests = [{[], 'foo', 'false'}
-             ,{['foo'], 'foo', 'true'}
-             ,{['foo'], 'bar', 'false'}
-             ,{[{'foo', 'bar'}], 'foo', 'true'}
-             ,{[{'foo', 'bar'}], 'bar', 'false'}
+	    ,{['foo'], 'foo', 'true'}
+	    ,{['foo'], 'bar', 'false'}
+	    ,{[{'foo', 'bar'}], 'foo', 'true'}
+	    ,{[{'foo', 'bar'}], 'bar', 'false'}
             ],
     lists:foreach(fun({Props, Key, Expected}) ->
                           ?assertEqual(Expected, props:is_defined(Key, Props))

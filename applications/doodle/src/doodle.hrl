@@ -15,11 +15,11 @@
 -define(CCV(Key), [<<"Custom-Channel-Vars">>, Key]).
 
 -record(amqp_listener_connection,{name :: binary()
-                                  ,broker :: binary()
-                                  ,exchange :: binary()
-                                  ,type :: binary()
-                                  ,queue :: binary()
-                                  ,options :: kz_proplist()
+				 ,broker :: binary()
+				 ,exchange :: binary()
+				 ,type :: binary()
+				 ,queue :: binary()
+				 ,options :: kz_proplist()
                                  }).
 
 -type amqp_listener_connection() :: #amqp_listener_connection{}.

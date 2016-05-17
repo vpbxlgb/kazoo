@@ -356,8 +356,8 @@ send_tasks(Tasks, Election) ->
 	    ok;
 	Alive ->
 	    Election = amqp_leader_proc:broadcast({from_leader, {tasks, Tasks}},
-					    Alive,
-					    Election),
+						  Alive,
+						  Election),
 	    ok
     end.
 
@@ -379,19 +379,19 @@ stop_tasks(State) ->
 start_tasks(State) ->
     TaskList = State#state.tasks,
     TaskList1 = lists:foldl(
-	     fun(Task, Acc) ->
-                    {Name, _, Schedule, Exec} = Task,
-                    case amqp_cron_task:start_link(Schedule, Exec) of
-                        {ok, Pid} ->
-                            [{Name, Pid, Schedule, Exec}|Acc];
-                        {error, Reason} ->
-                            Format = "Could not start task ~p ~p, name: ~p",
-                            Message = io_lib:format(Format,
-						    [Exec, Reason, Name]),
-                            error_logger:error_report(Message),
-                            [{Name, undefined, Schedule, Exec}|Acc]
-                    end
-	     end, [], TaskList),
+		  fun(Task, Acc) ->
+			  {Name, _, Schedule, Exec} = Task,
+			  case amqp_cron_task:start_link(Schedule, Exec) of
+			      {ok, Pid} ->
+				  [{Name, Pid, Schedule, Exec}|Acc];
+			      {error, Reason} ->
+				  Format = "Could not start task ~p ~p, name: ~p",
+				  Message = io_lib:format(Format,
+							  [Exec, Reason, Name]),
+				  error_logger:error_report(Message),
+				  [{Name, undefined, Schedule, Exec}|Acc]
+			  end
+		  end, [], TaskList),
     State#state{tasks = TaskList1}.
 
 remove_task_if_done(Task, Acc) ->

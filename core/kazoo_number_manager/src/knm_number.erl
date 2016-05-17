@@ -1,4 +1,4 @@
-%-------------------------------------------------------------------
+						%-------------------------------------------------------------------
 %%% @copyright (C) 2015, 2600Hz INC
 %%% @doc
 %%%
@@ -10,28 +10,28 @@
 -module(knm_number).
 
 -export([new/0
-         ,get/1, get/2
-         ,create/2
-         ,move/2, move/3
-         ,update/2, update/3
-         ,release/1, release/2
+	,get/1, get/2
+	,create/2
+	,move/2, move/3
+	,update/2, update/3
+	,release/1, release/2
          %% TODO: delete/1,2 (calls knm_phone_number:delete/1
-         ,assign_to_app/2, assign_to_app/3
-         ,lookup_account/1
-         ,save/1
-         ,reconcile/2
-         ,reserve/2
+	,assign_to_app/2, assign_to_app/3
+	,lookup_account/1
+	,save/1
+	,reconcile/2
+	,reserve/2
         ]).
 
 -export([phone_number/1, set_phone_number/2
-         ,services/1, set_services/2
-         ,billing_id/1, set_billing_id/2
-         ,transactions/1
-         ,add_transaction/2
-         ,errors/1
-         ,charges/2, set_charges/3
-         ,to_public_json/1
-         ,is_number/1
+	,services/1, set_services/2
+	,billing_id/1, set_billing_id/2
+	,transactions/1
+	,add_transaction/2
+	,errors/1
+	,charges/2, set_charges/3
+	,to_public_json/1
+	,is_number/1
         ]).
 
 
@@ -46,19 +46,19 @@
 -include("knm.hrl").
 
 -record(knm_number, {knm_phone_number :: knm_phone_number:knm_phone_number()
-                     ,services :: kz_services:services()
-                     ,billing_id :: api_binary()
-                     ,transactions = [] :: kz_transaction:transactions()
-                     ,errors = [] :: list()
-                     ,charges = [] :: [{ne_binary(), integer()}]
+		    ,services :: kz_services:services()
+		    ,billing_id :: api_binary()
+		    ,transactions = [] :: kz_transaction:transactions()
+		    ,errors = [] :: list()
+		    ,charges = [] :: [{ne_binary(), integer()}]
                     }).
 -opaque knm_number() :: #knm_number{}.
 -type knm_numbers() :: [knm_number()].
 
 -export_type([knm_number/0
-              ,knm_numbers/0
-              ,knm_number_return/0
-              ,dry_run_return/0
+	     ,knm_numbers/0
+	     ,knm_number_return/0
+	     ,dry_run_return/0
              ]).
 
 -type lookup_error() :: 'not_reconcilable' |
@@ -155,8 +155,8 @@ ensure_state(PhoneNumber, ExpectedState) ->
 create_phone_number(Number) ->
     ensure_state(phone_number(Number), ?NUMBER_STATE_AVAILABLE),
     Routines = [fun knm_number_states:to_reserved/1
-                ,fun save_number/1
-                ,fun dry_run_or_number/1
+	       ,fun save_number/1
+	       ,fun dry_run_or_number/1
                ],
     apply_number_routines(Number, Routines).
 
@@ -186,8 +186,8 @@ do_reserve(Number) ->
 -spec save_number(knm_number()) -> knm_number().
 save_number(Number) ->
     Routines = [fun knm_providers:save/1
-                ,fun save_phone_number/1
-                ,fun knm_services:update_services/1
+	       ,fun save_phone_number/1
+	       ,fun knm_services:update_services/1
                ],
     apply_number_routines(Number, Routines).
 
@@ -195,7 +195,7 @@ save_number(Number) ->
 save_phone_number(Number) ->
     set_phone_number(
       Number
-      ,knm_phone_number:save(phone_number(Number))
+		    ,knm_phone_number:save(phone_number(Number))
      ).
 
 -spec dry_run_or_number(knm_number()) -> knm_number() |
@@ -225,11 +225,11 @@ ensure_account_can_create(Options) ->
 
 -ifdef(TEST).
 -define(LOAD_ACCOUNT(Props, _AccountId)
-        ,{'ok', props:get_value(<<"auth_by_account">>, Props)}
+       ,{'ok', props:get_value(<<"auth_by_account">>, Props)}
        ).
 -else.
 -define(LOAD_ACCOUNT(_Options, AccountId)
-        ,kz_account:fetch(AccountId)
+       ,kz_account:fetch(AccountId)
        ).
 -endif.
 
@@ -259,28 +259,28 @@ create_updaters(?NE_BINARY=Num, Options) when is_list(Options) ->
     NormalizedNum = knm_converters:normalize(Num),
     props:filter_undefined(
       [{fun knm_phone_number:set_number/2, NormalizedNum}
-       ,{fun knm_phone_number:set_number_db/2, knm_converters:to_db(NormalizedNum)}
-       ,{fun knm_phone_number:set_state/2
-         ,knm_number_options:state(Options, ?NUMBER_STATE_AVAILABLE)
-        }
-       ,{fun knm_phone_number:set_ported_in/2
-         ,knm_number_options:ported_in(Options)
-        }
-       ,{fun knm_phone_number:set_assign_to/2
-         ,knm_number_options:assign_to(Options)
-        }
-       ,{fun knm_phone_number:set_auth_by/2
-         ,knm_number_options:auth_by(Options)
-        }
-       ,{fun knm_phone_number:set_dry_run/2
-         ,knm_number_options:dry_run(Options)
-        }
-       ,{fun knm_phone_number:set_module_name/2
-         ,knm_number_options:module_name(Options)
-        }
-       ,{fun knm_phone_number:update_doc/2
-         ,knm_number_options:public_fields(Options)
-        }
+      ,{fun knm_phone_number:set_number_db/2, knm_converters:to_db(NormalizedNum)}
+      ,{fun knm_phone_number:set_state/2
+       ,knm_number_options:state(Options, ?NUMBER_STATE_AVAILABLE)
+       }
+      ,{fun knm_phone_number:set_ported_in/2
+       ,knm_number_options:ported_in(Options)
+       }
+      ,{fun knm_phone_number:set_assign_to/2
+       ,knm_number_options:assign_to(Options)
+       }
+      ,{fun knm_phone_number:set_auth_by/2
+       ,knm_number_options:auth_by(Options)
+       }
+      ,{fun knm_phone_number:set_dry_run/2
+       ,knm_number_options:dry_run(Options)
+       }
+      ,{fun knm_phone_number:set_module_name/2
+       ,knm_number_options:module_name(Options)
+       }
+      ,{fun knm_phone_number:update_doc/2
+       ,knm_number_options:public_fields(Options)
+       }
       ]).
 
 %%--------------------------------------------------------------------
@@ -311,8 +311,8 @@ move_to(Number, MoveTo) ->
     MovedPhoneNumber = knm_phone_number:set_assign_to(PhoneNumber, AccountId),
     MovedNumber = set_phone_number(Number, MovedPhoneNumber),
     Routines = [fun knm_number_states:to_in_service/1
-                ,fun save_number/1
-                ,fun dry_run_or_number/1
+	       ,fun save_number/1
+	       ,fun dry_run_or_number/1
                ],
     apply_number_routines(MovedNumber, Routines).
 
@@ -344,7 +344,7 @@ update_phone_number(Number, Routines) ->
         {'ok', UpdatedPhoneNumber} ->
             wrap_phone_number_return(
               knm_phone_number:save(UpdatedPhoneNumber)
-              ,Number
+				    ,Number
              )
     end.
 
@@ -369,7 +369,7 @@ save(Number) ->
         end,
     wrap_phone_number_return(
       knm_phone_number:save(phone_number(Num))
-      ,Num
+			    ,Num
      ).
 
 %%--------------------------------------------------------------------
@@ -401,27 +401,27 @@ reconcile(DID, Options) ->
 reconcile_number(Number, Options) ->
     PhoneNumber = phone_number(Number),
     Updaters = [{knm_number_options:assign_to(Options)
-                 ,knm_phone_number:assigned_to(PhoneNumber)
-                 ,fun knm_phone_number:set_assigned_to/2
+		,knm_phone_number:assigned_to(PhoneNumber)
+		,fun knm_phone_number:set_assigned_to/2
                 }
-                ,{knm_number_options:auth_by(Options)
-                  ,knm_phone_number:auth_by(PhoneNumber)
-                  ,fun knm_phone_number:set_auth_by/2
-                 }
-                ,{knm_number_options:public_fields(Options)
-                  ,knm_phone_number:doc(PhoneNumber)
-                  ,fun knm_phone_number:update_doc/2
-                 }
-                ,{?NUMBER_STATE_IN_SERVICE
-                  ,knm_phone_number:state(PhoneNumber)
-                  ,fun knm_phone_number:set_state/2
-                 }
+	       ,{knm_number_options:auth_by(Options)
+		,knm_phone_number:auth_by(PhoneNumber)
+		,fun knm_phone_number:set_auth_by/2
+		}
+	       ,{knm_number_options:public_fields(Options)
+		,knm_phone_number:doc(PhoneNumber)
+		,fun knm_phone_number:update_doc/2
+		}
+	       ,{?NUMBER_STATE_IN_SERVICE
+		,knm_phone_number:state(PhoneNumber)
+		,fun knm_phone_number:set_state/2
+		}
                ],
     case updates_require_save(PhoneNumber, Updaters) of
         {'true', UpdatedPhoneNumber} ->
             wrap_phone_number_return(
               knm_phone_number:save(UpdatedPhoneNumber)
-              ,Number
+				    ,Number
              );
         {'false', _PhoneNumber} ->
             {'ok', Number}
@@ -431,8 +431,8 @@ reconcile_number(Number, Options) ->
                                   up_req_acc().
 updates_require_save(PhoneNumber, Updaters) ->
     lists:foldl(fun update_requires_save/2
-                ,{'false', PhoneNumber}
-                ,Updaters
+	       ,{'false', PhoneNumber}
+	       ,Updaters
                ).
 
 -type set_fun() :: fun((knm_phone_number:knm_phone_number(), any()) -> knm_phone_number:knm_phone_number()).
@@ -475,7 +475,7 @@ release_number(Number, Options) ->
     N = unwind_or_disconnect(N1, Options),
     wrap_phone_number_return(
       knm_phone_number:save(phone_number(N))
-      ,N
+			    ,N
      ).
 
 -spec unwind_or_disconnect(knm_number(), knm_number_options:options()) -> knm_number().
@@ -490,7 +490,7 @@ unwind_or_disconnect(Number, Options) ->
 -spec unwind(knm_phone_number:phone_number(), ne_binaries()) -> knm_number().
 unwind(Number, [NewAssignedTo|_]) ->
     Routines = [{fun knm_phone_number:set_assigned_to/2, NewAssignedTo}
-                ,{fun knm_phone_number:set_state/2, ?NUMBER_STATE_RESERVED}
+	       ,{fun knm_phone_number:set_state/2, ?NUMBER_STATE_RESERVED}
                ],
     {'ok', PhoneNumber} = knm_phone_number:setters(phone_number(Number), Routines),
     set_phone_number(Number, PhoneNumber).
@@ -542,7 +542,7 @@ maybe_update_assignment(Number, NewApp) ->
             UpdatedPhoneNumber = knm_phone_number:set_used_by(PhoneNumber, NewApp),
             wrap_phone_number_return(
               knm_phone_number:save(UpdatedPhoneNumber)
-              ,Number
+				    ,Number
              )
     end.
 
@@ -620,14 +620,14 @@ check_account(PhoneNumber) ->
             State = knm_phone_number:state(PhoneNumber),
             Num = knm_phone_number:number(PhoneNumber),
             Props = [{'pending_port', State =:= ?NUMBER_STATE_PORT_IN}
-                     ,{'local', Module =:= ?CARRIER_LOCAL}
-                     ,{'number', Num}
-                     ,{'account_id', AssignedTo}
-                     ,{'prepend', feature_prepend(PhoneNumber)}
-                     ,{'inbound_cnam', feature_inbound_cname(PhoneNumber)}
-                     ,{'ringback_media', find_early_ringback(PhoneNumber)}
-                     ,{'transfer_media', find_transfer_ringback(PhoneNumber)}
-                     ,{'force_outbound', is_force_outbound(PhoneNumber)}
+		    ,{'local', Module =:= ?CARRIER_LOCAL}
+		    ,{'number', Num}
+		    ,{'account_id', AssignedTo}
+		    ,{'prepend', feature_prepend(PhoneNumber)}
+		    ,{'inbound_cnam', feature_inbound_cname(PhoneNumber)}
+		    ,{'ringback_media', find_early_ringback(PhoneNumber)}
+		    ,{'transfer_media', find_transfer_ringback(PhoneNumber)}
+		    ,{'force_outbound', is_force_outbound(PhoneNumber)}
                     ],
             {'ok', AssignedTo, Props}
     end.
@@ -753,8 +753,8 @@ fetch_account_from_ports(NormalizedNum, Error) ->
     case
         kz_datamgr:get_results(
           ?KZ_PORT_REQUESTS_DB
-          ,<<"port_requests/port_in_numbers">>
-          ,[{'key', NormalizedNum}]
+			      ,<<"port_requests/port_in_numbers">>
+			      ,[{'key', NormalizedNum}]
          )
     of
         {'ok', []} ->
@@ -763,11 +763,11 @@ fetch_account_from_ports(NormalizedNum, Error) ->
         {'ok', [Port]} ->
             AccountId = kz_json:get_value(<<"value">>, Port),
             Props = [{'force_outbound', 'true'}
-                     ,{'pending_port', 'true'}
-                     ,{'local', 'true'}
-                     ,{'inbound_cnam', 'false'}
-                     ,{'number', NormalizedNum}
-                     ,{'account_id', AccountId}
+		    ,{'pending_port', 'true'}
+		    ,{'local', 'true'}
+		    ,{'inbound_cnam', 'false'}
+		    ,{'number', NormalizedNum}
+		    ,{'account_id', AccountId}
                     ],
             {'ok', AccountId, Props};
         {'error', 'not_found'}=E ->

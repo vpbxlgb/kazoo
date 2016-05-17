@@ -10,14 +10,14 @@
 -module(cb_user_auth).
 
 -export([init/0
-         ,allowed_methods/0, allowed_methods/1 %% only accept 0 or 1 path token
-         ,resource_exists/0, resource_exists/1
-         ,authorize/1
-         ,authenticate/1
-         ,validate/1, validate/2
-         ,put/1, put/2
-         ,post/2
-         ,cleanup_reset_ids/1
+	,allowed_methods/0, allowed_methods/1 %% only accept 0 or 1 path token
+	,resource_exists/0, resource_exists/1
+	,authorize/1
+	,authenticate/1
+	,validate/1, validate/2
+	,put/1, put/2
+	,post/2
+	,cleanup_reset_ids/1
         ]).
 
 -include("crossbar.hrl").
@@ -184,11 +184,11 @@ create_auth_resp(Context, AuthToken, AccountId, AccountId) ->
     RespData = cb_context:resp_data(Context),
     crossbar_util:response(
       crossbar_util:response_auth(RespData)
-      ,cb_context:set_auth_token(Context, AuthToken)
+			  ,cb_context:set_auth_token(Context, AuthToken)
      );
 create_auth_resp(Context, _AccountId, _AuthToken, _AuthAccountId) ->
     lager:debug("forbidding token for account ~s and auth account ~s"
-                ,[_AccountId, _AuthAccountId]),
+	       ,[_AccountId, _AuthAccountId]),
     cb_context:add_system_error('forbidden', Context).
 
 %%--------------------------------------------------------------------
@@ -225,21 +225,21 @@ maybe_authenticate_user(Context) ->
 maybe_authenticate_user(Context, Credentials, <<"md5">>, <<_/binary>> = Account) ->
     AccountDb = kz_util:format_account_id(Account, 'encoded'),
     Context1 = crossbar_doc:load_view(?ACCT_MD5_LIST
-                                      ,[{'key', Credentials}]
-                                      ,cb_context:set_account_db(Context, AccountDb)
+				     ,[{'key', Credentials}]
+				     ,cb_context:set_account_db(Context, AccountDb)
                                      ),
     case cb_context:resp_status(Context1) of
         'success' -> load_md5_results(Context1, cb_context:doc(Context1));
         _Status ->
             lager:debug("credentials do not belong to any user: ~s: ~p"
-                        ,[_Status, cb_context:doc(Context1)]),
+		       ,[_Status, cb_context:doc(Context1)]),
             cb_context:add_system_error('invalid_credentials', Context1)
     end;
 maybe_authenticate_user(Context, Credentials, <<"sha">>, <<_/binary>> = Account) ->
     AccountDb = kz_util:format_account_id(Account, 'encoded'),
     Context1 = crossbar_doc:load_view(?ACCT_SHA1_LIST
-                                      ,[{'key', Credentials}]
-                                      ,cb_context:set_account_db(Context, AccountDb)
+				     ,[{'key', Credentials}]
+				     ,cb_context:set_account_db(Context, AccountDb)
                                      ),
     case cb_context:resp_status(Context1) of
         'success' -> load_sha1_results(Context1, cb_context:doc(Context1));
@@ -252,7 +252,7 @@ maybe_authenticate_user(Context, _Creds, _Method, _Account) ->
     cb_context:add_system_error('invalid_credentials', Context).
 
 -spec maybe_auth_account(cb_context:context(), ne_binary(), ne_binary(), ne_binary()) ->
-                                     cb_context:context().
+				cb_context:context().
 maybe_auth_account(Context, Credentials, Method, Account) ->
     Context1 = maybe_authenticate_user(Context, Credentials, Method, Account),
     case cb_context:resp_status(Context1) of
@@ -262,7 +262,7 @@ maybe_auth_account(Context, Credentials, Method, Account) ->
     end.
 
 -spec maybe_auth_accounts(cb_context:context(), ne_binary(), ne_binary(), ne_binaries()) ->
-                                     cb_context:context().
+				 cb_context:context().
 maybe_auth_accounts(Context, _, _, []) ->
     lager:debug("no account(s) specified"),
     cb_context:add_system_error('invalid_credentials', Context);
@@ -284,7 +284,7 @@ maybe_account_is_expired(Context, Account) ->
             Cause =
                 kz_json:from_list(
                   [{<<"message">>, <<"account expired">>}
-                   ,{<<"cause">>, Expired}
+		  ,{<<"cause">>, Expired}
                   ]
                  ),
             cb_context:add_validation_error(<<"account">>, <<"expired">>, Cause, Context)
@@ -331,7 +331,7 @@ load_md5_results(Context, JObj) ->
 -spec cleanup_reset_ids(ne_binary()) -> 'ok'.
 cleanup_reset_ids(AccountDb) ->
     ViewOptions = [{'key', ?RESET_PVT_TYPE}
-                   ,'include_docs'
+		  ,'include_docs'
                   ],
     case kz_datamgr:get_results(AccountDb, <<"maintenance/listing_by_type">>, ViewOptions) of
         {'ok', [_|_]=ResetIdDocs} ->
@@ -374,7 +374,7 @@ maybe_load_user_doc_by_username(Account, Context) ->
     lager:debug("attempting to lookup user name in db: ~s", [AccountDb]),
     Username = kz_json:get_value(<<"username">>, JObj),
     ViewOptions = [{'key', Username}
-                   ,'include_docs'
+		  ,'include_docs'
                   ],
     case kz_datamgr:get_results(AccountDb, ?LIST_BY_USERNAME, ViewOptions) of
         {'ok', [User]} ->
@@ -383,30 +383,30 @@ maybe_load_user_doc_by_username(Account, Context) ->
                     lager:debug("user name '~s' was found and is not disabled, continue", [Username]),
                     Doc = kz_json:get_value(<<"doc">>, User),
                     cb_context:setters(Context, [{fun cb_context:set_account_db/2, Account}
-                                                 ,{fun cb_context:set_doc/2, Doc}
-                                                 ,{fun cb_context:set_resp_status/2, 'success'}
+						,{fun cb_context:set_doc/2, Doc}
+						,{fun cb_context:set_resp_status/2, 'success'}
                                                 ]);
                 'true' ->
                     lager:debug("user name '~s' was found but is disabled", [Username]),
                     cb_context:add_validation_error(
                       <<"username">>
-                      ,<<"forbidden">>
-                      ,kz_json:from_list(
-                         [{<<"message">>, <<"The provided user name is disabled">>}
-                          ,{<<"cause">>, Username}
-                         ])
-                      ,Context
+						   ,<<"forbidden">>
+						   ,kz_json:from_list(
+						      [{<<"message">>, <<"The provided user name is disabled">>}
+						      ,{<<"cause">>, Username}
+						      ])
+						   ,Context
                      )
             end;
         _ ->
             cb_context:add_validation_error(
               <<"username">>
-              ,<<"not_found">>
-              ,kz_json:from_list(
-                 [{<<"message">>, <<"The provided user name was not found">>}
-                  ,{<<"cause">>, Username}
-                 ])
-              ,Context
+					   ,<<"not_found">>
+					   ,kz_json:from_list(
+					      [{<<"message">>, <<"The provided user name was not found">>}
+					      ,{<<"cause">>, Username}
+					      ])
+					   ,Context
              )
     end.
 
@@ -425,12 +425,12 @@ save_reset_id_then_send_email(Context) ->
     Link = reset_link(UIURL, ResetId),
     lager:debug("created password reset link: ~s", [Link]),
     Notify = [{<<"Email">>, Email}
-              ,{<<"First-Name">>, kz_json:get_value(<<"first_name">>, UserDoc)}
-              ,{<<"Last-Name">>,  kz_json:get_value(<<"last_name">>, UserDoc)}
-              ,{<<"Password-Reset-Link">>, Link}
-              ,{<<"Account-ID">>, kz_doc:account_id(UserDoc)}
-              ,{<<"Account-DB">>, kz_doc:account_db(UserDoc)}
-              ,{<<"Request">>, kz_json:delete_key(<<"username">>, ReqData)}
+	     ,{<<"First-Name">>, kz_json:get_value(<<"first_name">>, UserDoc)}
+	     ,{<<"Last-Name">>,  kz_json:get_value(<<"last_name">>, UserDoc)}
+	     ,{<<"Password-Reset-Link">>, Link}
+	     ,{<<"Account-ID">>, kz_doc:account_id(UserDoc)}
+	     ,{<<"Account-DB">>, kz_doc:account_db(UserDoc)}
+	     ,{<<"Request">>, kz_json:delete_key(<<"username">>, ReqData)}
               | kz_api:default_headers(?APP_VERSION, ?APP_NAME)
              ],
     'ok' = kapi_notifications:publish_pwd_recovery(Notify),
@@ -449,12 +449,12 @@ maybe_load_user_doc_via_reset_id(Context) ->
             lager:debug("found password reset doc"),
             _ = kz_datamgr:del_doc(AccountDb, ResetIdDoc),
             cb_context:setters(Context, [{fun cb_context:set_account_db/2, AccountDb}
-                                         ,{fun cb_context:set_resp_status/2, 'success'}
+					,{fun cb_context:set_resp_status/2, 'success'}
                                         ]);
         _ ->
             Msg = kz_json:from_list(
                     [{<<"message">>, <<"The provided reset_id did not resolve to any user">>}
-                     ,{<<"cause">>, ResetId}
+		    ,{<<"cause">>, ResetId}
                     ]),
             cb_context:add_validation_error(<<"user">>, <<"not_found">>, Msg, Context)
     end.
@@ -480,8 +480,8 @@ reset_link(UIURL, ResetId) ->
 create_resetid_doc(ResetId) ->
     kz_json:from_list(
       [{<<"_id">>, ResetId}
-       ,{<<"pvt_created">>, kz_util:current_tstamp()}
-       ,{<<"pvt_type">>, ?RESET_PVT_TYPE}
+      ,{<<"pvt_created">>, kz_util:current_tstamp()}
+      ,{<<"pvt_type">>, ?RESET_PVT_TYPE}
       ]
      ).
 
@@ -507,12 +507,12 @@ find_account('undefined', 'undefined', AccountName, Context) ->
         {'error', _} ->
             C = cb_context:add_validation_error(
                   <<"account_name">>
-                  ,<<"not_found">>
-                  ,kz_json:from_list(
-                     [{<<"message">>, <<"The provided account name could not be found">>}
-                      ,{<<"cause">>, AccountName}
-                     ])
-                  ,Context
+					       ,<<"not_found">>
+					       ,kz_json:from_list(
+						  [{<<"message">>, <<"The provided account name could not be found">>}
+						  ,{<<"cause">>, AccountName}
+						  ])
+					       ,Context
                  ),
             find_account('undefined', 'undefined', 'undefined', C)
     end;
@@ -527,12 +527,12 @@ find_account('undefined', AccountRealm, AccountName, Context) ->
         {'error', _} ->
             C = cb_context:add_validation_error(
                   <<"account_realm">>
-                  ,<<"not_found">>
-                  ,kz_json:from_list(
-                     [{<<"message">>, <<"The provided account realm could not be found">>}
-                      ,{<<"cause">>, AccountRealm}
-                     ])
-                  ,Context
+					       ,<<"not_found">>
+					       ,kz_json:from_list(
+						  [{<<"message">>, <<"The provided account realm could not be found">>}
+						  ,{<<"cause">>, AccountRealm}
+						  ])
+					       ,Context
                  ),
             find_account('undefined', 'undefined', AccountName, C)
     end;
@@ -545,12 +545,12 @@ find_account(PhoneNumber, AccountRealm, AccountName, Context) ->
         {'error', _} ->
             C = cb_context:add_validation_error(
                   <<"phone_number">>
-                  ,<<"not_found">>
-                  ,kz_json:from_list(
-                     [{<<"message">>, <<"The provided phone number could not be found">>}
-                      ,{<<"cause">>, PhoneNumber}
-                     ])
-                  ,Context
+					       ,<<"not_found">>
+					       ,kz_json:from_list(
+						  [{<<"message">>, <<"The provided phone number could not be found">>}
+						  ,{<<"cause">>, PhoneNumber}
+						  ])
+					       ,Context
                  ),
             find_account('undefined', AccountRealm, AccountName, C)
     end.

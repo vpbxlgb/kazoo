@@ -14,8 +14,8 @@
 
 has_all_test() ->
     Prop = [{<<"k1">>, <<"v1">>}
-            ,{<<"k2">>, <<"v2">>}
-            ,{<<"k3">>, <<"v3">>}
+	   ,{<<"k2">>, <<"v2">>}
+	   ,{<<"k3">>, <<"v3">>}
            ],
     Headers = [<<"k1">>, <<"k2">>, <<"k3">>],
     ?assertEqual('true', kz_api:has_all(Prop, Headers)),
@@ -23,8 +23,8 @@ has_all_test() ->
 
 has_any_test() ->
     Prop = [{<<"k1">>, <<"v1">>}
-            ,{<<"k2">>, <<"v2">>}
-            ,{<<"k3">>, <<"v3">>}
+	   ,{<<"k2">>, <<"v2">>}
+	   ,{<<"k3">>, <<"v3">>}
            ],
     Headers = [<<"k1">>, <<"k2">>, <<"k3">>],
     ?assertEqual('true', kz_api:has_any(Prop, Headers)),

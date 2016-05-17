@@ -12,9 +12,9 @@
 -module(cb_dialplans).
 
 -export([init/0
-         ,allowed_methods/0
-         ,resource_exists/0
-         ,validate/1
+	,allowed_methods/0
+	,resource_exists/0
+	,validate/1
         ]).
 
 -include("crossbar.hrl").
@@ -65,5 +65,5 @@ resource_exists() -> 'true'.
 validate(Context) ->
     Doc = kz_json:from_list(kapps_config:get_all_kvs(<<"dialplans">>)),
     cb_context:setters(Context, [{fun cb_context:set_resp_data/2, Doc}
-                                 ,{fun cb_context:set_resp_status/2, 'success'}
+				,{fun cb_context:set_resp_status/2, 'success'}
                                 ]).

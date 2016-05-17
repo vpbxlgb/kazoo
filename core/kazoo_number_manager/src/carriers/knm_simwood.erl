@@ -14,10 +14,10 @@
 -behaviour(knm_gen_carrier).
 
 -export([find_numbers/3
-         ,acquire_number/1
-         ,disconnect_number/1
-         ,is_number_billable/1
-         ,should_lookup_cnam/0
+	,acquire_number/1
+	,disconnect_number/1
+	,is_number_billable/1
+	,should_lookup_cnam/0
         ]).
 
 -include("knm.hrl").
@@ -25,10 +25,10 @@
 -define(KNM_SW_CONFIG_CAT, <<(?KNM_CONFIG_CAT)/binary, ".simwood">>).
 
 -define(SW_NUMBER_URL
-        ,kapps_config:get_string(?KNM_SW_CONFIG_CAT
-                                  ,<<"numbers_api_url">>
-                                  ,<<"https://api.simwood.com/v3/numbers">>
-                                 )
+       ,kapps_config:get_string(?KNM_SW_CONFIG_CAT
+			       ,<<"numbers_api_url">>
+			       ,<<"https://api.simwood.com/v3/numbers">>
+			       )
        ).
 
 -define(SW_ACCOUNT_ID, kapps_config:get_string(?KNM_SW_CONFIG_CAT, <<"simwood_account_id">>, <<>>)).
@@ -121,9 +121,9 @@ should_lookup_cnam() -> 'true'.
 query_simwood(URL, Verb) ->
     lager:debug("Querying Simwood. Verb: ~p. URL: ~p.", [Verb, URL]),
     HTTPOptions = [{'ssl', [{'verify', 'verify_none'}]}
-                   ,{'timeout', 180 * ?MILLISECONDS_IN_SECOND}
-                   ,{'connect_timeout', 180 * ?MILLISECONDS_IN_SECOND}
-                   ,{'basic_auth', {?SW_AUTH_USERNAME, ?SW_AUTH_PASSWORD}}
+		  ,{'timeout', 180 * ?MILLISECONDS_IN_SECOND}
+		  ,{'connect_timeout', 180 * ?MILLISECONDS_IN_SECOND}
+		  ,{'basic_auth', {?SW_AUTH_USERNAME, ?SW_AUTH_PASSWORD}}
                   ],
     case kz_http:req(Verb, kz_util:to_binary(URL), [], [], HTTPOptions) of
         {'ok', _Resp, _RespHeaders, Body} ->
@@ -157,7 +157,7 @@ process_response(JObjs, Options) ->
     {'ok', [response_jobj_to_number(JObj, AccountId) || JObj <- JObjs]}.
 
 -spec response_jobj_to_number(kz_json:object(), api_binary()) ->
-                              knm_number:knm_number().
+				     knm_number:knm_number().
 response_jobj_to_number(JObj, AccountId) ->
     Num = kz_json:get_value(<<"number">>, JObj),
     {'ok', PhoneNumber} =

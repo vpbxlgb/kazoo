@@ -99,11 +99,11 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {
-        schedule :: schedule(),
-        exec :: execargs(),
-        task_pid :: pid(),
-        status :: status(),
-		next}).
+	  schedule :: schedule(),
+	  exec :: execargs(),
+	  task_pid :: pid(),
+	  status :: status(),
+	  next}).
 
 -define(DAY_IN_SECONDS, 86400).
 -define(HOUR_IN_SECONDS, 3600).
@@ -405,8 +405,8 @@ next_valid_datetime(not_done, {cron, Schedule}, DateTime) ->
 		DOMValid = value_valid(DayOfMonthSpec, 1, 31, Day),
 		DOWValid = value_valid(DayOfWeekSpec, 0, 6, DayOfWeek),
 		case (((DayOfMonthSpec /= all) and
-		       (DayOfWeekSpec /= all) and
-		      (DOMValid or DOWValid)) or (DOMValid and DOWValid)) of
+						 (DayOfWeekSpec /= all) and
+									  (DOMValid or DOWValid)) or (DOMValid and DOWValid)) of
 		    false ->
 			Temp1 = advance_seconds(DateTime, ?DAY_IN_SECONDS),
 			{{Y, M, D}, {_, _, _}} = Temp1,
@@ -470,12 +470,12 @@ extract_integers([], Min, Max, Acc) ->
     lists:foreach(
       fun
           (Int) when Int < Min ->
-              throw({'error', {'out_of_range', {'min', Min}, {'value', Int}}});
+			 throw({'error', {'out_of_range', {'min', Min}, {'value', Int}}});
           (Int) when Int > Max ->
-              throw({'error', {'out_of_range', {'max', Max}, {'value', Int}}});
+			 throw({'error', {'out_of_range', {'max', Max}, {'value', Int}}});
           (_Int) ->
-              'ok'
-      end, Integers),
+			 'ok'
+		 end, Integers),
     Integers;
 extract_integers(Spec, Min, Max, Acc) ->
     [H|T] = Spec,
@@ -496,12 +496,12 @@ extract_integers(Spec, Min, Max, Acc) ->
 -define(LONG_SLEEP_TIME, 100000000).
 
 sleep_accounting_for_max(TimeInMillis) ->
-       case (TimeInMillis > ?LONG_SLEEP_TIME) of
-	       true -> timer:sleep(TimeInMillis rem ?LONG_SLEEP_TIME), long_sleep(TimeInMillis div ?LONG_SLEEP_TIME);
-	       false -> timer:sleep(TimeInMillis)
-       end.
+    case (TimeInMillis > ?LONG_SLEEP_TIME) of
+	true -> timer:sleep(TimeInMillis rem ?LONG_SLEEP_TIME), long_sleep(TimeInMillis div ?LONG_SLEEP_TIME);
+	false -> timer:sleep(TimeInMillis)
+    end.
 
 long_sleep(0) -> ok;
 long_sleep(Chunks) ->
-	timer:sleep(?LONG_SLEEP_TIME),
-	long_sleep(Chunks - 1).
+    timer:sleep(?LONG_SLEEP_TIME),
+    long_sleep(Chunks - 1).

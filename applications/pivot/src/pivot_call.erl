@@ -12,21 +12,21 @@
 
 %% API
 -export([start_link/2
-         ,maybe_relay_event/2
-         ,stop_call/2
-         ,new_request/3, new_request/4
-         ,updated_call/2
-         ,usurp_executor/1
+	,maybe_relay_event/2
+	,stop_call/2
+	,new_request/3, new_request/4
+	,updated_call/2
+	,usurp_executor/1
         ]).
 
 %% gen_server callbacks
 -export([init/1
-         ,handle_call/3
-         ,handle_cast/2
-         ,handle_info/2
-         ,handle_event/2
-         ,terminate/2
-         ,code_change/3
+	,handle_call/3
+	,handle_cast/2
+	,handle_info/2
+	,handle_event/2
+	,terminate/2
+	,code_change/3
         ]).
 
 -include("pivot.hrl").
@@ -36,21 +36,21 @@
 -type http_method() :: 'get' | 'post'.
 
 -record(state, {voice_uri :: api_binary()
-                ,cdr_uri :: api_binary()
-                ,request_format = <<"twiml">> :: api_binary()
-                ,method = 'get' :: http_method()
-                ,call :: kapps_call:call()
-                ,request_id :: kz_http:req_id()
-                ,request_params :: kz_json:object()
-                ,response_code :: ne_binary()
-                ,response_headers :: binaries() | ne_binary()
-                ,response_body = <<>> :: binary()
-                ,response_content_type :: binary()
-                ,response_pid :: pid() %% pid of the processing of the response
-                ,response_event_handlers = [] :: pids()
-                ,response_ref :: reference() %% monitor ref for the pid
-                ,debug = 'false' :: boolean()
-                ,requester_queue :: api_binary()
+	       ,cdr_uri :: api_binary()
+	       ,request_format = <<"twiml">> :: api_binary()
+	       ,method = 'get' :: http_method()
+	       ,call :: kapps_call:call()
+	       ,request_id :: kz_http:req_id()
+	       ,request_params :: kz_json:object()
+	       ,response_code :: ne_binary()
+	       ,response_headers :: binaries() | ne_binary()
+	       ,response_body = <<>> :: binary()
+	       ,response_content_type :: binary()
+	       ,response_pid :: pid() %% pid of the processing of the response
+	       ,response_event_handlers = [] :: pids()
+	       ,response_ref :: reference() %% monitor ref for the pid
+	       ,debug = 'false' :: boolean()
+	       ,requester_queue :: api_binary()
                }).
 -type state() :: #state{}.
 
@@ -66,15 +66,15 @@ start_link(Call, JObj) ->
     CallId = kapps_call:call_id(Call),
 
     gen_listener:start_link(?SERVER, [{'bindings', [{'call', [{'callid', CallId}]}
-                                                    ,{'self', []}
+						   ,{'self', []}
                                                    ]}
-                                      ,{'responders', [{{?MODULE, 'maybe_relay_event'}
-                                                        ,[{<<"conference">>, <<"config_req">>}
-                                                          ,{<<"resource">>, <<"offnet_resp">>}
-                                                          ,{<<"call_event">>, <<"*">>}
-                                                         ]
-                                                       }
-                                                      ]}
+				     ,{'responders', [{{?MODULE, 'maybe_relay_event'}
+						      ,[{<<"conference">>, <<"config_req">>}
+						       ,{<<"resource">>, <<"offnet_resp">>}
+						       ,{<<"call_event">>, <<"*">>}
+						       ]
+						      }
+						     ]}
                                      ], [Call, JObj]).
 
 -spec stop_call(pid(), kapps_call:call()) -> 'ok'.
@@ -145,13 +145,13 @@ init([Call, JObj]) ->
     ?MODULE:new_request(self(), VoiceUri, Method, BaseParams),
 
     {'ok'
-     ,#state{cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
-             ,call=kapps_call:kvs_update_counter('pivot_counter', 1, Call)
-             ,request_format=ReqFormat
-             ,debug=kz_json:is_true(<<"Debug">>, JObj, 'false')
-             ,requester_queue = kapps_call:controller_queue(Call)
-            }
-     ,'hibernate'
+    ,#state{cdr_uri=kz_json:get_value(<<"CDR-URI">>, JObj)
+	   ,call=kapps_call:kvs_update_counter('pivot_counter', 1, Call)
+	   ,request_format=ReqFormat
+	   ,debug=kz_json:is_true(<<"Debug">>, JObj, 'false')
+	   ,requester_queue = kapps_call:controller_queue(Call)
+	   }
+    ,'hibernate'
     }.
 
 %%--------------------------------------------------------------------
@@ -188,12 +188,12 @@ handle_cast('usurp', State) ->
     lager:debug("terminating pivot call because of usurp"),
     {'stop', 'normal', State#state{call='undefined'}};
 handle_cast({'request', Uri, Method}, #state{call=Call
-                                             ,request_format=ReqFormat
+					    ,request_format=ReqFormat
                                             }=State) ->
     handle_cast({'request', Uri, Method, req_params(ReqFormat, Call)}, State);
 handle_cast({'request', Uri, Method, Params}, #state{call=Call
-                                                     ,debug=Debug
-                                                     ,requester_queue=Q
+						    ,debug=Debug
+						    ,requester_queue=Q
                                                     }=State) ->
     Call1 = kzt_util:set_voice_uri(Uri, Call),
 
@@ -201,12 +201,12 @@ handle_cast({'request', Uri, Method, Params}, #state{call=Call
         {'ok', ReqId, Call2} ->
             lager:debug("sent request ~p to '~s' via '~s'", [ReqId, Uri, Method]),
             {'noreply', State#state{request_id=ReqId
-                                    ,request_params=Params
-                                    ,response_content_type = <<>>
-                                    ,response_body = <<>>
-                                    ,method=Method
-                                    ,voice_uri=Uri
-                                    ,call=Call2
+				   ,request_params=Params
+				   ,response_content_type = <<>>
+				   ,response_body = <<>>
+				   ,method=Method
+				   ,voice_uri=Uri
+				   ,call=Call2
                                    }};
         _ ->
             kapi_pivot:publish_failed(Q, [{<<"Call-ID">>, kapps_call:call_id(Call)}
@@ -228,14 +228,14 @@ handle_cast({'stop', Call}, #state{cdr_uri='undefined'}=State) ->
     {'stop', 'normal', State};
 
 handle_cast({'cdr', _JObj}, #state{cdr_uri='undefined'
-                                   ,call=Call
+				  ,call=Call
                                   }=State) ->
     lager:debug("recv cdr for call, no cdr uri though"),
     erlang:send_after(3000, self(), {'stop', Call}),
     {'noreply', State};
 handle_cast({'cdr', JObj}, #state{cdr_uri=Url
-                                  ,call=Call
-                                  ,debug=Debug
+				 ,call=Call
+				 ,debug=Debug
                                  }=State) ->
     JObj1 = kz_json:delete_key(<<"Custom-Channel-Vars">>, JObj),
     Body =  kz_json:to_querystring(kz_api:remove_defaults(JObj1)),
@@ -282,73 +282,73 @@ handle_cast(_Req, State) ->
 handle_info({'stop', _Call}, State) ->
     {'stop', 'normal', State};
 handle_info({'http', {ReqId, 'stream_start', Hdrs}}
-            ,#state{request_id=ReqId
-                   }=State) ->
+	   ,#state{request_id=ReqId
+		  }=State) ->
     RespHeaders = normalize_resp_headers(Hdrs),
     lager:debug("recv resp headers"),
     {'noreply', State#state{response_headers=RespHeaders}};
 
 handle_info({'http', {ReqId, {'error', Error}}}
-            ,#state{request_id=ReqId
-                    ,response_body=_RespBody
-                   }=State) ->
+	   ,#state{request_id=ReqId
+		  ,response_body=_RespBody
+		  }=State) ->
     lager:info("recv error ~p : collected: ~s", [Error, _RespBody]),
     {'noreply', State};
 
 handle_info({'http', {ReqId, 'stream', Chunk}}
-            ,#state{request_id=ReqId
-                    ,response_body=RespBody
-                   }=State) ->
+	   ,#state{request_id=ReqId
+		  ,response_body=RespBody
+		  }=State) ->
     lager:info("adding response chunk: '~s'", [Chunk]),
     {'noreply', State#state{response_body = <<RespBody/binary, Chunk/binary>>}};
 
 handle_info({'http', {ReqId, 'stream_end', FinalHeaders}}, #state{request_id=ReqId
-                                                                  ,response_body=RespBody
-                                                                  ,call=Call
-                                                                  ,debug=Debug
-                                                                  ,requester_queue=RequesterQ
+								 ,response_body=RespBody
+								 ,call=Call
+								 ,debug=Debug
+								 ,requester_queue=RequesterQ
                                                                  }=State) ->
     RespHeaders = normalize_resp_headers(FinalHeaders),
     maybe_debug_resp(Debug, Call, <<"200">>, RespHeaders, RespBody),
     HandleArgs = [RequesterQ
-                  ,kzt_util:set_amqp_listener(self(), Call)
-                  ,props:get_value(<<"content-type">>, RespHeaders)
-                  ,RespBody
+		 ,kzt_util:set_amqp_listener(self(), Call)
+		 ,props:get_value(<<"content-type">>, RespHeaders)
+		 ,RespBody
                  ],
     {Pid, Ref} = kz_util:spawn_monitor(fun handle_resp/4, HandleArgs),
     lager:debug("processing resp with ~p(~p)", [Pid, Ref]),
     {'noreply', State#state{request_id = 'undefined'
-                            ,request_params = kz_json:new()
-                            ,response_body = <<>>
-                            ,response_content_type = <<>>
-                            ,response_pid = Pid
-                            ,response_ref = Ref
+			   ,request_params = kz_json:new()
+			   ,response_body = <<>>
+			   ,response_content_type = <<>>
+			   ,response_pid = Pid
+			   ,response_ref = Ref
                            }
-     ,'hibernate'};
+    ,'hibernate'};
 
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, _}}}
-            ,#state{request_id=ReqId}=State)
+	   ,#state{request_id=ReqId}=State)
   when (StatusCode - 400) < 100 ->
     lager:info("recv client failure status code ~p", [StatusCode]),
     {'noreply', State#state{
                   response_content_type=props:get_value(<<"content-type">>, RespHeaders)
-                  ,response_code = integer_to_binary(StatusCode)
-                  ,response_headers=RespHeaders
+			   ,response_code = integer_to_binary(StatusCode)
+			   ,response_headers=RespHeaders
                  }
     };
 handle_info({'http', {ReqId, {{_, StatusCode, _}, RespHeaders, _}}}
-            ,#state{request_id=ReqId}=State)
+	   ,#state{request_id=ReqId}=State)
   when (StatusCode - 500) < 100 ->
     lager:info("recv server failure status code ~p", [StatusCode]),
     {'noreply', State#state{
                   response_content_type=props:get_value(<<"content-type">>, RespHeaders)
-                  ,response_code = integer_to_binary(StatusCode)
-                  ,response_headers=RespHeaders
+			   ,response_code = integer_to_binary(StatusCode)
+			   ,response_headers=RespHeaders
                  }
     };
 
 handle_info({'DOWN', Ref, 'process', Pid, Reason}, #state{response_pid=Pid
-                                                          ,response_ref=Ref
+							 ,response_ref=Ref
                                                          }=State) ->
     lager:debug("response pid ~p(~p) down: ~p", [Pid, Ref, Reason]),
     {'noreply', State#state{response_pid='undefined'}, 'hibernate'};
@@ -367,10 +367,10 @@ handle_info(_Info, State) ->
 %%--------------------------------------------------------------------
 -spec handle_event(kz_json:object(), state()) -> gen_listener:handle_event_return().
 handle_event(_JObj, #state{response_pid=Pid
-                           ,response_event_handlers=Pids
+			  ,response_event_handlers=Pids
                           }) ->
     {'reply', [{'pid', Pid}
-               ,{'pids', Pids}
+	      ,{'pids', Pids}
               ]}.
 
 %%--------------------------------------------------------------------
@@ -454,8 +454,8 @@ handle_resp(RequesterQ, Call, CT, RespBody) ->
         {'request', Call1} ->
             ?MODULE:updated_call(Srv, Call1),
             ?MODULE:new_request(Srv
-                                ,kzt_util:get_voice_uri(Call1)
-                                ,kzt_util:get_voice_uri_method(Call1)
+			       ,kzt_util:get_voice_uri(Call1)
+			       ,kzt_util:get_voice_uri_method(Call1)
                                )
     end.
 
@@ -524,10 +524,10 @@ maybe_debug_req(_Call, _Uri, _Method, _ReqHdrs, _ReqBody, 'false') -> 'ok';
 maybe_debug_req(Call, Uri, Method, ReqHdrs, ReqBody, 'true') ->
     Headers = kz_json:from_list([{fix_value(K), fix_value(V)} || {K, V} <- ReqHdrs]),
     store_debug(Call, [{<<"uri">>, iolist_to_binary(Uri)}
-                       ,{<<"method">>, kz_util:to_binary(Method)}
-                       ,{<<"req_headers">>, Headers}
-                       ,{<<"req_body">>, iolist_to_binary(ReqBody)}
-                       ,{<<"iteration">>, kapps_call:kvs_fetch('pivot_counter', Call)}
+		      ,{<<"method">>, kz_util:to_binary(Method)}
+		      ,{<<"req_headers">>, Headers}
+		      ,{<<"req_body">>, iolist_to_binary(ReqBody)}
+		      ,{<<"iteration">>, kapps_call:kvs_fetch('pivot_counter', Call)}
                       ]).
 
 -spec maybe_debug_resp(boolean(), kapps_call:call(), ne_binary(), kz_proplist(), binary()) -> 'ok'.
@@ -535,27 +535,27 @@ maybe_debug_resp('false', _Call, _StatusCode, _RespHeaders, _RespBody) -> 'ok';
 maybe_debug_resp('true', Call, StatusCode, RespHeaders, RespBody) ->
     Headers = kz_json:from_list([{fix_value(K), fix_value(V)} || {K, V} <- RespHeaders]),
     store_debug(
-        Call
-        ,[{<<"resp_status_code">>, StatusCode}
-          ,{<<"resp_headers">>, Headers}
-          ,{<<"resp_body">>, RespBody}
-          ,{<<"iteration">>, kapps_call:kvs_fetch('pivot_counter', Call)}
-        ]
-    ).
+      Call
+	       ,[{<<"resp_status_code">>, StatusCode}
+		,{<<"resp_headers">>, Headers}
+		,{<<"resp_body">>, RespBody}
+		,{<<"iteration">>, kapps_call:kvs_fetch('pivot_counter', Call)}
+		]
+     ).
 
 -spec store_debug(kapps_call:call(), kz_proplist()) -> 'ok'.
 store_debug(Call, Doc) ->
     AccountModDb = kz_util:format_account_mod_id(kapps_call:account_id(Call)),
     JObj =
         kz_doc:update_pvt_parameters(
-            kz_json:from_list([{<<"call_id">>, kapps_call:call_id(Call)} | Doc])
-            ,AccountModDb
-            ,[{'account_id', kapps_call:account_id(Call)}
-              ,{'account_db', AccountModDb}
-              ,{'type', <<"pivot_debug">>}
-              ,{'now', kz_util:current_tstamp()}
-            ]
-        ),
+	  kz_json:from_list([{<<"call_id">>, kapps_call:call_id(Call)} | Doc])
+				    ,AccountModDb
+				    ,[{'account_id', kapps_call:account_id(Call)}
+				     ,{'account_db', AccountModDb}
+				     ,{'type', <<"pivot_debug">>}
+				     ,{'now', kz_util:current_tstamp()}
+				     ]
+	 ),
     case kazoo_modb:save_doc(AccountModDb, JObj) of
         {'ok', _Saved} ->
             lager:debug("saved debug doc: ~p", [_Saved]);
